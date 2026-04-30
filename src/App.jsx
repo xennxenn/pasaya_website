@@ -48,10 +48,12 @@ const MOCK_USERS = [
   { id: "T58121", name: "Admin", role: "admin", password: "Admin" },
   { id: "EMP001", name: "พนักงานขาย 1", role: "employee", password: "1234" }
 ];
-const DEFAULT_FILTERS = ["ทั้งหมด", "ม่านลอน", "ม่านจีบ", "ม่านม้วน", "มู่ลี่ไม้", "Black out", "Dim out", "บ้านพักอาศัย", "คอนโด"];
+const DEFAULT_FILTERS = ["ทั้งหมด", "ม่านลอน", "ม่านจีบ", "ม่านตาไก่", "ม่านม้วน", "มู่ลี่ไม้", "Black out", "Dim out", "บ้านพักอาศัย", "คอนโด"];
 
 const MOCK_SETTINGS = {
   heroImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+  heroTitle: "รังสรรค์พื้นที่ในฝัน",
+  heroSubtitle: "ด้วยผ้าม่านระดับพรีเมียม",
   heroPos: { x: 50, y: 50, zoom: 1 },
   cardFabricImage: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=800&q=80",
   cardFabricPos: { x: 50, y: 50, zoom: 1 },
@@ -61,37 +63,35 @@ const MOCK_SETTINGS = {
   cardWallPos: { x: 50, y: 50, zoom: 1 }
 };
 const MOCK_FABRIC_TYPES = [
-  { id: "blackout", title: "Black out", desc: "กันแสง 100% ให้ความเป็นส่วนตัวสูงสุด และช่วยลดอุณหภูมิห้อง", fit: "ห้องนอน, ห้องดูหนัง, โรงแรม", image: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "dimout", title: "Dim out", desc: "กันแสง 80-95% ผ้าพริ้วไหวสวยงาม สีสันหลากหลาย", fit: "ห้องนั่งเล่น, ห้องนอนทั่วไป, คอนโด", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "energy", title: "Energy Saving", desc: "เนื้อผ้าทอพิเศษ ช่วยสะท้อนความร้อน ประหยัดพลังงานแอร์", fit: "ห้องที่รับแดดบ่าย, บ้านทิศตะวันตก, ออฟฟิศ", image: "https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "drapery", title: "Drapery", desc: "ผ้าม่านทึบแสงตกแต่งทั่วไป เน้นลวดลายและ Texture ที่หรูหรา", fit: "โถงรับแขก, ห้องนั่งเล่นหลัก", image: "https://images.unsplash.com/photo-1522771731478-44fb509f61b0?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "flame", title: "Flame Retardant", desc: "ผ้ากันลามไฟ ปลอดภัยสูงสุด ได้รับมาตรฐานสากล", fit: "โรงแรม, โรงพยาบาล, โครงการสาธารณะ", image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "multi", title: "Multipurpose", desc: "ผ้าอเนกประสงค์ ใช้งานได้หลากหลาย ทั้งม่านและบุเฟอร์นิเจอร์", fit: "พื้นที่ที่ต้องการความเข้าชุดกันของม่านและเฟอร์นิเจอร์", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "upholstery", title: "Upholstery", desc: "ผ้าบุโซฟาและเฟอร์นิเจอร์ ทนทานต่อการเสียดสีสูง", fit: "งานสั่งทำเฟอร์นิเจอร์, ล็อบบี้", image: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "sheer", title: "Sheer", desc: "ผ้าโปร่ง กรองแสงให้นุ่มนวล เพิ่มความพริ้วไหวและหรูหรา", fit: "ซ้อนเป็นม่านชั้นใน, ห้องที่ต้องการแสงธรรมชาติ", image: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "blackout", order: 0, title: "Black out", desc: "กันแสง 100% ให้ความเป็นส่วนตัวสูงสุด และช่วยลดอุณหภูมิห้อง", fit: "ห้องนอน, ห้องดูหนัง, โรงแรม", image: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "dimout", order: 1, title: "Dim out", desc: "กันแสง 80-95% ผ้าพริ้วไหวสวยงาม สีสันหลากหลาย", fit: "ห้องนั่งเล่น, ห้องนอนทั่วไป, คอนโด", image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "energy", order: 2, title: "Energy Saving", desc: "เนื้อผ้าทอพิเศษ ช่วยสะท้อนความร้อน ประหยัดพลังงานแอร์", fit: "ห้องที่รับแดดบ่าย, บ้านทิศตะวันตก, ออฟฟิศ", image: "https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "drapery", order: 3, title: "Drapery", desc: "ผ้าม่านทึบแสงตกแต่งทั่วไป เน้นลวดลายและ Texture ที่หรูหรา", fit: "โถงรับแขก, ห้องนั่งเล่นหลัก", image: "https://images.unsplash.com/photo-1522771731478-44fb509f61b0?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "flame", order: 4, title: "Flame Retardant", desc: "ผ้ากันลามไฟ ปลอดภัยสูงสุด ได้รับมาตรฐานสากล", fit: "โรงแรม, โรงพยาบาล, โครงการสาธารณะ", image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "multi", order: 5, title: "Multipurpose", desc: "ผ้าอเนกประสงค์ ใช้งานได้หลากหลาย ทั้งม่านและบุเฟอร์นิเจอร์", fit: "พื้นที่ที่ต้องการความเข้าชุดกันของม่านและเฟอร์นิเจอร์", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "upholstery", order: 6, title: "Upholstery", desc: "ผ้าบุโซฟาและเฟอร์นิเจอร์ ทนทานต่อการเสียดสีสูง", fit: "งานสั่งทำเฟอร์นิเจอร์, ล็อบบี้", image: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "sheer", order: 7, title: "Sheer", desc: "ผ้าโปร่ง กรองแสงให้นุ่มนวล เพิ่มความพริ้วไหวและหรูหรา", fit: "ซ้อนเป็นม่านชั้นใน, ห้องที่ต้องการแสงธรรมชาติ", image: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
 ];
 const MOCK_CURTAIN_STYLES = [
-  { id: "pleat", title: "ม่านจีบ", desc: "คลาสสิก จับจีบ 3 จีบ สวยงามเป็นระเบียบ", tags: ["ม่านจีบ", "classic"], image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "wave", title: "ม่านลอน", desc: "ทันสมัย ลอนโค้งสม่ำเสมอ ทิ้งตัวสวย", tags: ["ม่านลอน", "modern"], image: "https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "roman", title: "ม่านพับ", desc: "ประหยัดพื้นที่ พับซ้อนกันขึ้นด้านบน", tags: ["ม่านพับ", "roman"], image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "roller", title: "ม่านม้วน", desc: "มินิมอล ทำความสะอาดง่าย ม้วนเก็บเนี๊ยบ", tags: ["ม่านม้วน", "minimal"], image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "eyelet", title: "ม่านตาไก่", desc: "สอดห่วงโลหะเข้ากับราง ใช้งานง่าย ดูโปร่ง", tags: ["ตาไก่", "eyelet"], image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "loop", title: "คอกระเช้า", desc: "ใช้หูผ้าคล้องกับราง สไตล์โฮมมี่/รีสอร์ท", tags: ["คอกระเช้า", "resort"], image: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "louis", title: "ม่านหลุยส์", desc: "หรูหราอลังการ มีจับจีบตกแต่งระบาย", tags: ["ม่านหลุยส์", "luxury classic"], image: "https://images.unsplash.com/photo-1522771731478-44fb509f61b0?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "blinds", title: "มู่ลี่", desc: "ปรับทิศทางแสงได้ มีทั้งไม้และอลูมิเนียม", tags: ["มู่ลี่", "blinds"], image: "https://images.unsplash.com/photo-1558211583-d26f610c1eb1?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "hook", title: "ม่านเสียบตะขอ", desc: "รูปแบบมาตรฐานดั้งเดิม ใช้ตะขอเสียบ", tags: ["ตะขอ", "standard"], image: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "hospital", title: "ม่านโรงพยาบาล", desc: "ตาข่ายระบายอากาศด้านบน รูดเปิดปิดง่าย", tags: ["โรงพยาบาล", "hospital"], image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "pleat", order: 0, title: "ม่านจีบ", desc: "คลาสสิก จับจีบ 3 จีบ สวยงามเป็นระเบียบ", tags: ["ม่านจีบ", "classic"], image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "wave", order: 1, title: "ม่านลอน", desc: "ทันสมัย ลอนโค้งสม่ำเสมอ ทิ้งตัวสวย", tags: ["ม่านลอน", "modern"], image: "https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "eyelet", order: 2, title: "ม่านตาไก่", desc: "ร้อยห่วงตาไก่เข้ากับราง ใช้งานง่ายและดูเรียบหรู", tags: ["ม่านตาไก่", "eyelet"], image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "roman", order: 3, title: "ม่านพับ", desc: "ประหยัดพื้นที่ พับซ้อนกันขึ้นด้านบน", tags: ["ม่านพับ", "roman"], image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "roller", order: 4, title: "ม่านม้วน", desc: "มินิมอล ทำความสะอาดง่าย ม้วนเก็บเนี๊ยบ", tags: ["ม่านม้วน", "minimal"], image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "blinds", order: 5, title: "มู่ลี่", desc: "ปรับทิศทางแสงได้ มีทั้งไม้และอลูมิเนียม", tags: ["มู่ลี่", "blinds"], image: "https://images.unsplash.com/photo-1558211583-d26f610c1eb1?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "tabtop", order: 6, title: "ม่านคอกระเช้า", desc: "สไตล์โฮมมี่ น่ารัก คล้องหูผ้าเข้ากับรางโดยตรง", tags: ["ม่านคอกระเช้า", "tabtop"], image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
 ];
 const MOCK_WALL_FABRICS = [
-  { id: "wall1", title: "Wall Fabric Signature", style: "Texture premium", desc: "ใช้แทน Wallpaper ช่วยลดเสียงก้อง เพิ่มมิติและสัมผัสที่หรูหรา", image: "https://images.unsplash.com/photo-1598928506311-c95148c8ab1a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
-  { id: "wall2", title: "Acoustic Wall Art", style: "Sound Absorbent", desc: "บุผนังซับเสียง เหมาะสำหรับห้องดูหนัง หรือห้องประชุม", image: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" }
+  { id: "wall1", order: 0, title: "Wall Fabric Signature", style: "Texture premium", desc: "ใช้แทน Wallpaper ช่วยลดเสียงก้อง เพิ่มมิติและสัมผัสที่หรูหรา", image: "https://images.unsplash.com/photo-1598928506311-c95148c8ab1a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
+  { id: "wall2", order: 1, title: "Acoustic Wall Art", style: "Sound Absorbent", desc: "บุผนังซับเสียง เหมาะสำหรับห้องดูหนัง หรือห้องประชุม", image: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" }
 ];
 const MOCK_PORTFOLIO_CARDS = [
   { 
-    id: "port1", title: "Luxury Residence", subtitle: "ม่านลอน • Dim out + Sheer", type: "บ้านพักอาศัย", fabricType: "Dim out", curtainStyle: "ม่านลอน", model: "Premium Dimout", color: "Warm Beige", 
+    id: "port1", title: "Luxury Residence", subtitle: "ม่านลอน • Dim out | โปร่ง: ม่านจีบ • Sheer", type: "บ้านพักอาศัย", fabricType: "Dim out", sheerFabric: "Sheer", sheerStyle: "ม่านจีบ", sheerModel: "Sheer White", sheerColor: "White", curtainStyle: "ม่านลอน", model: "Premium Dimout", color: "Warm Beige", 
     tags: ["ม่านลอน", "Dim out", "Sheer", "บ้านพักอาศัย", "Warm Beige", "Luxury"], 
     images: ["https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&w=1400&q=80", "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1400&q=80"], 
-    description: "งานบ้านพักอาศัยระดับ Luxury โชว์ความพลิ้วไหวของเนื้อผ้า ใช้ม่านลอนคู่กับผ้าโปร่งเพื่อความนุ่มนวล สร้างบรรยากาศที่ดูแพงและอบอุ่นในเวลาเดียวกัน"
+    description: "งานบ้านพักอาศัยระดับ Luxury โชว์ความพลิ้วไหวของเนื้อผ้า ใช้ม่านลอนคู่กับผ้าโปร่งเพื่อความนุ่มนวล สร้างบรรยากาศที่ดูแพงและอบอุ่นในเวลาเดียวกัน",
+    mergedIds: ["port1"]
   },
 ];
 const MOCK_TIMELINE_ITEMS = [
@@ -111,6 +111,55 @@ const safeScale = (zoom) => {
   const scale = parseFloat(zoom);
   return isNaN(scale) ? 1 : scale;
 };
+
+// ฟังก์ชันป้องกัน Error การแครชเวลาข้อมูลมาจาก Firebase แล้วมี Format ผิดปกติ (แก้บั๊ก undefined)
+const renderString = (val, fallback = '') => {
+  if (val === null || val === undefined) return fallback;
+  if (typeof val === 'string' && (val === "undefined" || val === "null" || val.trim() === "")) return fallback;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number') return String(val);
+  return fallback;
+};
+
+// ฟังก์ชันลบเว้นวรรคและตัวพิมพ์เล็กใหญ่เพื่อเช็คการซ้ำซ้อนอย่างแม่นยำที่สุด
+const norm = (str) => {
+  if (!str || str === "-") return "";
+  return String(str).toLowerCase().replace(/[\s\-\_]+/g, '');
+};
+
+// สร้าง Key สำหรับใช้ Group งานที่เหมือนกันเป๊ะๆ ให้มารวมใน Card เดียวกัน
+const getGroupKey = (item) => {
+  const hasSheer = !!norm(item.sheerFabric);
+  const sheerPart = hasSheer 
+    ? `|${norm(item.sheerFabric)}|${norm(item.sheerStyle || 'ม่านจีบ')}|${norm(item.sheerModel)}|${norm(item.sheerColor)}` 
+    : `|none|none|none|none`;
+  return `${norm(item.curtainStyle)}|${norm(item.fabricType)}|${norm(item.model)}|${norm(item.color)}${sheerPart}`;
+};
+
+// Safe rendering tags to prevent React element Object crashes
+const getSafeTags = (item) => {
+  if (!item) return [];
+  let types = [];
+  if (Array.isArray(item.type)) {
+      types = item.type;
+  } else if (typeof item.type === 'string') {
+      types = item.type.split(',');
+  }
+  const rawTags = [
+      item.curtainStyle,
+      item.fabricType,
+      item.sheerFabric,
+      ...types
+  ];
+  return Array.from(new Set(rawTags.filter(Boolean).map(String).map(s => s.trim()).filter(t => t !== 'undefined' && t !== 'null')));
+};
+
+const bgStyleObj = (url, pos) => ({
+  backgroundImage: `url("${url || ''}")`,
+  backgroundPosition: pos ? `${pos.x !== undefined ? pos.x : 50}% ${pos.y !== undefined ? pos.y : 50}%` : 'center',
+  backgroundSize: pos?.zoom ? `${safeScale(pos.zoom) * 100}%` : 'cover',
+  backgroundRepeat: 'no-repeat'
+});
 
 // Used for cropping/zooming perfectly without overflowing the container
 const innerBgStyle = (url, pos) => ({
@@ -148,7 +197,6 @@ export default function PasayaCurtainCenterPreview() {
   const [newUserForm, setNewUserForm] = useState({ id: "", name: "", role: "employee", password: "" });
   const [editingUserId, setEditingUserId] = useState(null);
   const [editUserForm, setEditUserForm] = useState({ id: "", name: "", role: "", password: "" });
-  const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
 
   const [productTab, setProductTab] = useState("fabricTypes");
   const [selectedFabric, setSelectedFabric] = useState(null);
@@ -177,10 +225,11 @@ export default function PasayaCurtainCenterPreview() {
   const [uploadQueue, setUploadQueue] = useState([]); 
   const [isUploadingToCloud, setIsUploadingToCloud] = useState(false);
 
-  // Edit Modal (Global for changing images, zoom/pan, text color, card aspect)
+  // Edit Modal (Global for changing images, zoom/pan, text color, card aspect, and preview ratio)
   const [editImageModal, setEditImageModal] = useState({ 
     isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, 
-    pos: { x: 50, y: 50, zoom: 1 }, textColor: '#FFFFFF', cardAspect: 'landscape'
+    pos: { x: 50, y: 50, zoom: 1 }, textColor: '#FFFFFF', cardAspect: 'landscape',
+    previewAspect: '4:3', targetItem: null
   });
   const fileInputRef = useRef(null);
   const smartMediaInputRef = useRef(null);
@@ -222,10 +271,23 @@ export default function PasayaCurtainCenterPreview() {
   useEffect(() => {
     if (!db) return;
 
+    // Use isDeleted flag to completely ignore deleted items AND clean up "undefined" strings
     const mergeData = (dbList, mockList) => {
-      const merged = mockList.map(mock => dbList.find(d => d.id === mock.id) || mock);
-      const newItems = dbList.filter(d => !mockList.find(mock => mock.id === d.id));
-      return [...merged, ...newItems];
+      const activeDbList = dbList.filter(d => !d.isDeleted);
+      const merged = mockList.map(mock => {
+        const dbItem = activeDbList.find(d => d.id === mock.id);
+        if (!dbItem) return mock;
+
+        const cleanDbItem = {};
+        for (const [key, value] of Object.entries(dbItem)) {
+          if (value !== 'undefined' && value !== undefined && value !== null) {
+            cleanDbItem[key] = value;
+          }
+        }
+        return { ...mock, ...cleanDbItem };
+      });
+      const newItems = activeDbList.filter(d => !mockList.find(mock => mock.id === d.id));
+      return [...merged, ...newItems].filter(d => !d.isDeleted).sort((a, b) => (a.order || 0) - (b.order || 0));
     };
 
     const unsubSettings = onSnapshot(doc(db, "settings", "home"), (docSnap) => {
@@ -248,7 +310,10 @@ export default function PasayaCurtainCenterPreview() {
         setPortfolioCards([]); 
       } else {
         const dbItems = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setPortfolioCards(dbItems.reverse());
+        const activeDbItems = dbItems.filter(d => !d.isDeleted);
+        const newItems = activeDbItems.filter(d => !MOCK_PORTFOLIO_CARDS.find(mock => mock.id === d.id));
+        const mergedMocks = MOCK_PORTFOLIO_CARDS.map(mock => activeDbItems.find(d => d.id === mock.id) || mock).filter(d => !d.isDeleted);
+        setPortfolioCards([...newItems.reverse(), ...mergedMocks]);
       }
     });
 
@@ -337,21 +402,83 @@ export default function PasayaCurtainCenterPreview() {
   const toggleVisibility = async (collectionName, item, currentHiddenState) => {
     if (!db) return;
     try {
-      await setDoc(doc(db, collectionName, item.id), { ...item, isHidden: !currentHiddenState }, { merge: true });
+      if (collectionName === "portfolio" && item.mergedIds) {
+         for (const id of item.mergedIds) {
+            await setDoc(doc(db, collectionName, id), { isHidden: !currentHiddenState }, { merge: true });
+         }
+      } else {
+         await setDoc(doc(db, collectionName, item.id), { ...item, isHidden: !currentHiddenState }, { merge: true });
+      }
     } catch (e) {
       console.error("Toggle visibility failed", e);
     }
   };
 
+  const handleMoveItem = async (collectionName, items, index, direction, setStateFunc) => {
+    if (index + direction < 0 || index + direction >= items.length) return;
+    const newList = [...items];
+    const item1 = newList[index];
+    const item2 = newList[index + direction];
+
+    const order1 = item1.order !== undefined ? item1.order : index;
+    const order2 = item2.order !== undefined ? item2.order : index + direction;
+
+    item1.order = order2;
+    item2.order = order1;
+
+    newList.sort((a,b) => a.order - b.order);
+    setStateFunc(newList); 
+
+    if (db) {
+      await setDoc(doc(db, collectionName, item1.id), { order: order2 }, { merge: true });
+      await setDoc(doc(db, collectionName, item2.id), { order: order1 }, { merge: true });
+    }
+  };
+
+  // Dynamic Grouping of Portfolio Cards
+  const groupedPortfolioCards = useMemo(() => {
+    const grouped = [];
+    const map = new Map();
+
+    portfolioCards.forEach(item => {
+        const key = getGroupKey(item);
+        
+        if (map.has(key)) {
+            const existing = map.get(key);
+            // Merge images
+            const newImages = item.images.filter(img => !existing.images.includes(img));
+            existing.images = [...existing.images, ...newImages];
+            // Merge tags
+            existing.tags = getSafeTags(existing).concat(getSafeTags(item));
+            existing.tags = Array.from(new Set(existing.tags));
+            
+            // Merge types (บ้าน/คอนโด)
+            const typeSet = new Set([
+              ...(existing.type ? String(existing.type).split(',').map(s=>s.trim()) : []),
+              ...(item.type ? String(item.type).split(',').map(s=>s.trim()) : [])
+            ]);
+            existing.type = Array.from(typeSet).filter(Boolean).join(', ');
+            
+            if (!existing.mergedIds) existing.mergedIds = [existing.id];
+            if (!existing.mergedIds.includes(item.id)) existing.mergedIds.push(item.id);
+        } else {
+            const clone = { ...item, images: [...item.images], tags: getSafeTags(item), mergedIds: [item.id] };
+            map.set(key, clone);
+            grouped.push(clone);
+        }
+    });
+    return grouped;
+  }, [portfolioCards]);
+
   const filteredPortfolio = useMemo(() => {
-    let base = portfolioCards;
+    let base = groupedPortfolioCards;
     if (currentUser?.role !== 'admin') {
       base = base.filter(item => !item.isHidden);
     }
     if (selectedPortfolioFilter !== "ทั้งหมด") {
       base = base.filter(item => 
-        item.tags?.some(tag => tag.includes(selectedPortfolioFilter)) || 
-        item.type === selectedPortfolioFilter ||
+        getSafeTags(item).some(tag => String(tag).includes(selectedPortfolioFilter)) || 
+        (item.type && String(item.type).includes(selectedPortfolioFilter)) ||
         item.fabricType === selectedPortfolioFilter ||
         item.curtainStyle === selectedPortfolioFilter
       );
@@ -359,15 +486,15 @@ export default function PasayaCurtainCenterPreview() {
     if (portfolioSearch.trim()) {
       const q = portfolioSearch.toLowerCase();
       base = base.filter(item => 
-        item.title?.toLowerCase().includes(q) || 
-        item.subtitle?.toLowerCase().includes(q) ||
-        item.tags?.some(tag => tag.toLowerCase().includes(q)) || 
-        item.model?.toLowerCase().includes(q) ||
-        item.color?.toLowerCase().includes(q)
+        String(item.title || "").toLowerCase().includes(q) || 
+        String(item.subtitle || "").toLowerCase().includes(q) ||
+        getSafeTags(item).some(tag => String(tag).toLowerCase().includes(q)) || 
+        String(item.model || "").toLowerCase().includes(q) ||
+        String(item.color || "").toLowerCase().includes(q)
       );
     }
     return base;
-  }, [selectedPortfolioFilter, portfolioSearch, portfolioCards, currentUser]);
+  }, [selectedPortfolioFilter, portfolioSearch, groupedPortfolioCards, currentUser]);
 
   // ================= CLOUDINARY API =================
   const uploadImageToCloudinary = async (file) => {
@@ -410,7 +537,9 @@ export default function PasayaCurtainCenterPreview() {
       fileObj: null, isSaving: false,
       pos: currentObj.imgPos || currentObj[`${id}Pos`] || { x: 50, y: 50, zoom: 1 },
       textColor: currentObj.textColor || '#FFFFFF',
-      cardAspect: currentObj.cardAspect || 'landscape'
+      cardAspect: currentObj.cardAspect || 'landscape',
+      previewAspect: '4:3', // Default preview matching the grid UI
+      targetItem: currentObj // Save entire obj reference to prevent dropping fields!
     });
   };
 
@@ -421,7 +550,7 @@ export default function PasayaCurtainCenterPreview() {
   };
 
   const handleSaveImage = async () => {
-    const { type, id, url, fileObj, pos, textColor, cardAspect } = editImageModal;
+    const { type, id, url, fileObj, pos, textColor, cardAspect, targetItem } = editImageModal;
     if (!fileObj && !url.trim()) return;
 
     setEditImageModal(prev => ({ ...prev, isSaving: true }));
@@ -447,11 +576,19 @@ export default function PasayaCurtainCenterPreview() {
         if (pIndex > -1) {
            const newImages = [...portfolioCards[pIndex].images];
            newImages[currentImageIndex] = finalImageUrl;
+           // If editing a grouped card, we apply position only to the primary document to avoid complexity
            if (db) await setDoc(doc(db, "portfolio", id), { images: newImages, imgPos: pos, cardAspect }, { merge: true });
         }
       } else {
+        // Fallback generator to prevent erasing fields if obj was somehow missing
+        const getFallbackItem = () => {
+           if(type==='fabricTypes') return MOCK_FABRIC_TYPES.find(i=>i.id===id);
+           if(type==='curtainStyles') return MOCK_CURTAIN_STYLES.find(i=>i.id===id);
+           if(type==='wallFabrics') return MOCK_WALL_FABRICS.find(i=>i.id===id);
+           return {};
+        };
         const fullItem = {
-           ...(fabricTypes.find(i=>i.id === id) || curtainStyles.find(i=>i.id===id) || wallFabrics.find(i=>i.id===id)),
+           ...(targetItem || getFallbackItem() || {}),
            ...payload
         };
         if (db) await setDoc(doc(db, type, id), fullItem, { merge: true });
@@ -460,7 +597,7 @@ export default function PasayaCurtainCenterPreview() {
       console.error("Save image error", e);
     }
     
-    setEditImageModal(prev => ({ ...prev, isOpen: false, isSaving: false }));
+    setEditImageModal({ isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, pos:{x:50,y:50,zoom:1}, textColor:'#FFF', cardAspect:'landscape', previewAspect: '4:3', targetItem: null });
     if(fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -522,13 +659,22 @@ export default function PasayaCurtainCenterPreview() {
     });
   };
 
-  // ================= SMART MEDIA LOGIC =================
-  const cleanNameString = (name) => {
-    let cleaned = name.replace(/\.[^/.]+$/, ""); 
-    cleaned = cleaned.replace(/[\s_-]+\d+.*$/, ""); 
-    return cleaned.trim();
+  // Get Aspect Ratio Style for Preview Modal (Inline style matching precise UI display)
+  const getPreviewStyle = () => {
+    if (editImageModal.type === "settings_home") {
+       if (editImageModal.id === 'hero') return { aspectRatio: '5 / 4' };
+       return { aspectRatio: '16 / 9' }; 
+    }
+    if (['wallFabrics', 'fabricTypes', 'curtainStyles'].includes(editImageModal.type)) {
+       return { aspectRatio: editImageModal.previewAspect === '16:9' ? '16 / 9' : '4 / 3' };
+    }
+    if (editImageModal.type === "portfolioCards") {
+       return { aspectRatio: editImageModal.cardAspect === 'portrait' ? '3 / 4' : '4 / 3' };
+    }
+    return { aspectRatio: '4 / 3' };
   };
 
+  // ================= SMART MEDIA LOGIC =================
   const handleSmartMediaUpload = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -551,6 +697,10 @@ export default function PasayaCurtainCenterPreview() {
           model: cleanModel,
           color: cleanColor,
           fabricType: "Dim out",
+          sheerFabric: "",
+          sheerStyle: "ม่านจีบ",
+          sheerModel: "",
+          sheerColor: "",
           curtainStyle: "ม่านลอน",
           type: "บ้านพักอาศัย",
           images: [], 
@@ -576,7 +726,28 @@ export default function PasayaCurtainCenterPreview() {
   const saveBulkPortfolio = async () => {
     setIsUploadingToCloud(true);
     try {
-      await Promise.all(uploadQueue.map(async (item) => {
+      // จับกลุ่มรูปภาพที่มีสเปกตรงกันภายในรอบอัปโหลดเดียวกันก่อน
+      const groupedQueue = {};
+      for (const item of uploadQueue) {
+        const sig = getGroupKey(item);
+        if (!groupedQueue[sig]) {
+          groupedQueue[sig] = { ...item, rawFiles: [...item.rawFiles], images: [...item.images] };
+        } else {
+          groupedQueue[sig].rawFiles.push(...item.rawFiles);
+          groupedQueue[sig].images.push(...item.images);
+          // Combine tags/types
+          const mergedTypes = Array.from(new Set([
+             ...(groupedQueue[sig].type ? String(groupedQueue[sig].type).split(',').map(s=>s.trim()) : []), 
+             ...(item.type ? String(item.type).split(',').map(s=>s.trim()) : [])
+          ])).filter(Boolean).join(", ");
+          groupedQueue[sig].type = mergedTypes;
+        }
+      }
+
+      const uniqueItems = Object.values(groupedQueue);
+
+      // Save sequentially to avoid race conditions when matching with DB
+      for (const item of uniqueItems) {
         const uploadedUrls = [];
         for (const file of item.rawFiles) {
           const url = await uploadImageToCloudinary(file);
@@ -584,15 +755,24 @@ export default function PasayaCurtainCenterPreview() {
         }
         const finalImages = uploadedUrls.length > 0 ? uploadedUrls : item.images;
 
+        let subtitleText = `${item.curtainStyle} • ${item.fabricType}`;
+        if (item.sheerFabric) subtitleText += ` | โปร่ง: ${item.sheerStyle || 'ม่านจีบ'} • ${item.sheerFabric}`;
+
+        const itemTags = getSafeTags(item);
+
         const cardData = {
           title: item.title || "ผลงานใหม่",
-          subtitle: `${item.curtainStyle} • ${item.fabricType}`,
+          subtitle: subtitleText,
           type: item.type,
           fabricType: item.fabricType,
+          sheerFabric: item.sheerFabric || "",
+          sheerStyle: item.sheerStyle || "",
+          sheerModel: item.sheerModel || "",
+          sheerColor: item.sheerColor || "",
           curtainStyle: item.curtainStyle,
           model: item.model || "-",
           color: item.color || "-",
-          tags: [item.curtainStyle, item.fabricType, item.type],
+          tags: itemTags,
           images: finalImages, 
           presetClass: item.presetClass,
           cardAspect: item.cardAspect,
@@ -601,8 +781,27 @@ export default function PasayaCurtainCenterPreview() {
           isHidden: false
         };
 
-        if (db) await addDoc(collection(db, "portfolio"), cardData);
-      }));
+        // ตรวจสอบว่ามีสเปกที่ตรงกันทุกประการอยู่ในฐานข้อมูลแล้วหรือไม่
+        const existingMatch = groupedPortfolioCards.find(p => getGroupKey(p) === getGroupKey(item) && !p.isHidden && !p.isDeleted);
+
+        if (existingMatch && db) {
+          const primaryId = existingMatch.mergedIds[0];
+          const combinedImages = Array.from(new Set([...existingMatch.images, ...finalImages]));
+          const combinedTags = Array.from(new Set([...getSafeTags(existingMatch), ...itemTags]));
+          const combinedTypes = Array.from(new Set([
+            ...(existingMatch.type ? String(existingMatch.type).split(',').map(s=>s.trim()) : []), 
+            ...(item.type ? String(item.type).split(',').map(s=>s.trim()) : [])
+          ])).filter(Boolean).join(', ');
+
+          await setDoc(doc(db, "portfolio", primaryId), { 
+            images: combinedImages,
+            tags: combinedTags,
+            type: combinedTypes
+          }, { merge: true });
+        } else if (db) {
+          await addDoc(collection(db, "portfolio"), cardData);
+        }
+      }
       setUploadStep(4);
     } catch (e) {
       console.error(e);
@@ -615,18 +814,43 @@ export default function PasayaCurtainCenterPreview() {
   // ================= OTHERS =================
   const confirmDeleteProject = async () => {
     try {
-      if (db) await deleteDoc(doc(db, "portfolio", selectedProject.id));
+      if (db) {
+        const idsToDelete = selectedProject.mergedIds || [selectedProject.id];
+        for (const id of idsToDelete) {
+           await setDoc(doc(db, "portfolio", id), { isDeleted: true }, { merge: true });
+        }
+      }
     } catch(e) { console.error("Delete Error", e); }
-    
-    setPortfolioCards(prev => prev.filter(p => p.id !== selectedProject.id)); 
     closeProjectModal();
     setIsConfirmingDelete(false);
   };
 
   const saveProjectEdit = async () => {
-    const updatedData = { ...editProjectForm, subtitle: `${editProjectForm.curtainStyle} • ${editProjectForm.fabricType}` };
-    if (db) await updateDoc(doc(db, "portfolio", selectedProject.id), updatedData);
+    let newSubtitle = `${editProjectForm.curtainStyle} • ${editProjectForm.fabricType}`;
+    if (editProjectForm.sheerFabric) newSubtitle += ` | โปร่ง: ${editProjectForm.sheerStyle || 'ม่านจีบ'} • ${editProjectForm.sheerFabric}`;
+
+    const uniqueTags = getSafeTags(editProjectForm);
+    const updatedData = { ...editProjectForm, subtitle: newSubtitle, tags: uniqueTags };
+    
+    // Remove mergedIds from payload to DB
+    const { mergedIds, ...dataToSave } = updatedData;
+
+    if (db) {
+        const idsToUpdate = selectedProject.mergedIds || [selectedProject.id];
+        const primaryId = idsToUpdate[0];
+        
+        await updateDoc(doc(db, "portfolio", primaryId), dataToSave);
+        
+        // Consolidate others into the primary one by deleting them to clean up DB
+        if (idsToUpdate.length > 1) {
+            for (let i = 1; i < idsToUpdate.length; i++) {
+               await setDoc(doc(db, "portfolio", idsToUpdate[i]), { isDeleted: true }, { merge: true });
+            }
+        }
+    }
+    
     setIsEditingProject(false);
+    setSelectedProject(null);
   };
 
   const handleDeepLinkToPortfolio = (tagKeyword) => {
@@ -642,7 +866,15 @@ export default function PasayaCurtainCenterPreview() {
     setZoomLevel(1);
     setIsEditingProject(false);
     setIsConfirmingDelete(false);
-    setSelectedProject(project);
+    
+    // Fallback sheer fields for older data
+    setSelectedProject({
+      ...project,
+      sheerFabric: project.sheerFabric || "",
+      sheerStyle: project.sheerStyle || "ม่านจีบ",
+      sheerModel: project.sheerModel || "",
+      sheerColor: project.sheerColor || ""
+    });
   };
 
   const closeProjectModal = () => {
@@ -794,7 +1026,9 @@ export default function PasayaCurtainCenterPreview() {
   };
 
   const handleDeleteTimeline = async (id) => {
-    if (db) await deleteDoc(doc(db, "timeline", id));
+    try {
+      if (db) await setDoc(doc(db, "timeline", id), { isDeleted: true }, { merge: true });
+    } catch(e) { console.error(e) }
     setConfirmDeleteTimelineId(null);
   };
 
@@ -889,71 +1123,70 @@ export default function PasayaCurtainCenterPreview() {
           )}
         </div>
 
-        {/* ================= HOME PAGE (ORIGINAL LAYOUT RESTORED) ================= */}
+        {/* ================= HOME PAGE (NEW FIXED FULL-WIDTH LAYOUT) ================= */}
         {activePage === "Home" && (
-          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-700">
-            <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-              {/* LEFT: Hero Card */}
-              <div className={`overflow-hidden ${glassCard}`}>
-                <div className="grid md:grid-cols-[1.1fr_0.9fr] h-full relative group">
-                  <div className="p-6 md:p-10 flex flex-col justify-center">
-                    <div className="mb-4 inline-flex w-fit rounded-full border border-neutral-200/60 bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-700 backdrop-blur-md">
-                      PASAYA EXPERIENCE
-                    </div>
-                    {/* Fixed Text from original approved version */}
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                      รังสรรค์พื้นที่ในฝัน<br/><span className="text-neutral-500">ด้วยผ้าม่านระดับพรีเมียม</span>
-                    </h1>
-                    <p className="mt-5 text-sm md:text-base leading-relaxed text-neutral-600 max-w-md">
-                      ร่วมค้นหาสไตล์ที่ใช่ไปกับเรา ผ่านคอลเลกชันเนื้อผ้าคุณภาพสูง รูปแบบการตัดเย็บที่ประณีต และชมผลงานติดตั้งจริงเพื่อเป็นแรงบันดาลใจให้กับบ้านของคุณ
-                    </p>
-                    <div className="mt-8 flex flex-wrap gap-3">
-                      <button onClick={() => navigateTo("Products")} className={activeButton}>ชมแคตตาล็อกสินค้า</button>
-                      <button onClick={() => navigateTo("AI Assistant")} className={softButton}>ผู้ช่วยแนะนำสไตล์</button>
-                    </div>
-                  </div>
-                  
-                  {/* Hero Image (Editable + Zoom) */}
-                  <div className="min-h-[250px] md:min-h-full relative overflow-hidden bg-neutral-200 group">
-                     <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
-                         <div className="w-full h-full" style={innerBgStyle(settings?.heroImage || MOCK_SETTINGS.heroImage, settings?.heroPos)} />
-                     </div>
-                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
-                     
-                     {currentUser?.role === 'admin' && (
-                        <button onClick={(e) => { e.stopPropagation(); openEditModal("settings_home", "hero", settings || MOCK_SETTINGS); }} className="absolute top-4 right-4 bg-white/90 p-2 rounded-full text-neutral-600 hover:text-neutral-900 hover:bg-white shadow-md z-20 transition-colors opacity-0 group-hover:opacity-100">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                        </button>
-                     )}
-                  </div>
+          <section className="animate-in fade-in duration-700">
+            <div className={`p-4 sm:p-8 ${glassCard} flex flex-col lg:flex-row gap-6 lg:gap-8 lg:min-h-[600px]`}>
+              {/* LEFT: Hero Section */}
+              <div className="flex-[1.3] relative rounded-[24px] overflow-hidden group shadow-inner bg-neutral-100 border border-neutral-200/60 min-h-[300px]">
+                <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
+                   <div className="w-full h-full" style={innerBgStyle(settings?.heroImage || MOCK_SETTINGS.heroImage, settings?.heroPos)} />
                 </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-transparent pointer-events-none" />
+                <div className="relative z-10 p-8 md:p-12 flex flex-col justify-center h-full max-w-lg">
+                   <div className="mb-4 inline-flex w-fit rounded-full border border-neutral-200/60 bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-700 backdrop-blur-md">
+                     PASAYA EXPERIENCE
+                   </div>
+                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
+                     {renderString(settings?.heroTitle || "รังสรรค์พื้นที่ในฝัน\nด้วยผ้าม่านระดับพรีเมียม").split(/<br\/>|\n/).map((txt, i) => <React.Fragment key={i}>{txt}<br/></React.Fragment>)}
+                   </h1>
+                   <p className="mt-5 text-sm md:text-base leading-relaxed text-neutral-600">
+                     {renderString(settings?.heroSubtitle || "ร่วมค้นหาสไตล์ที่ใช่ไปกับเรา ผ่านคอลเลกชันเนื้อผ้าคุณภาพสูง รูปแบบการตัดเย็บที่ประณีต และชมผลงานติดตั้งจริงเพื่อเป็นแรงบันดาลใจให้กับบ้านของคุณ")}
+                   </p>
+                   <div className="mt-8 flex flex-wrap gap-3">
+                     <button onClick={() => navigateTo("Products")} className={activeButton}>ชมแคตตาล็อกสินค้า</button>
+                     <button onClick={() => navigateTo("AI Assistant")} className={softButton}>ผู้ช่วยแนะนำสไตล์</button>
+                   </div>
+                </div>
+
+                {currentUser?.role === 'admin' && (
+                  <button onClick={(e) => { e.stopPropagation(); openEditModal("settings_home", "hero", settings || MOCK_SETTINGS); }} className="absolute top-4 right-4 bg-white/90 p-2 rounded-full text-neutral-600 hover:text-neutral-900 hover:bg-white shadow-md z-20 transition-colors opacity-0 group-hover:opacity-100">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                )}
               </div>
 
-              {/* RIGHT: Recommended Categories (Visual Cards only) */}
-              <div className="flex flex-col gap-4 h-full">
-                 {[
-                   { id: "cardFabric", title: "ประเภทเนื้อผ้า (Fabric Types)", tab: "fabricTypes", image: settings?.cardFabricImage || MOCK_SETTINGS.cardFabricImage, pos: settings?.cardFabricPos || MOCK_SETTINGS.cardFabricPos },
-                   { id: "cardCurtain", title: "รูปแบบผ้าม่าน (Curtain Styles)", tab: "curtainStyles", image: settings?.cardCurtainImage || MOCK_SETTINGS.cardCurtainImage, pos: settings?.cardCurtainPos || MOCK_SETTINGS.cardCurtainPos },
-                   { id: "cardWall", title: "Wall Fabric", tab: "wallFabric", image: settings?.cardWallImage || MOCK_SETTINGS.cardWallImage, pos: settings?.cardWallPos || MOCK_SETTINGS.cardWallPos }
-                 ].map((item) => (
-                   <div key={item.title} className="relative flex-1 rounded-[24px] overflow-hidden group border border-white/50 shadow-sm min-h-[120px] cursor-pointer" onClick={() => { navigateTo("Products"); setProductTab(item.tab); }}>
-                      <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
-                         <div className="w-full h-full" style={innerBgStyle(item.image, item.pos)} />
-                      </div>
-                      <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors pointer-events-none" />
-                      <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
-                         <h3 className="text-white font-bold text-lg sm:text-xl drop-shadow-md text-center">{item.title}</h3>
-                      </div>
-                      {currentUser?.role === 'admin' && (
-                        <button onClick={(e) => { e.stopPropagation(); openEditModal("settings_home", item.id, { image: item.image, imgPos: item.pos }); }} className="absolute top-3 right-3 bg-white/90 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 hover:bg-white shadow-md z-20 transition-colors opacity-0 group-hover:opacity-100">
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                        </button>
-                      )}
-                   </div>
-                 ))}
+              {/* RIGHT: Recommended Categories */}
+              <div className="flex-[0.7] flex flex-col gap-4">
+                 <div className="flex items-center justify-between px-2 pb-1">
+                   <h3 className="font-semibold text-lg text-neutral-800">หมวดหมู่สินค้าแนะนำ</h3>
+                   <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                 </div>
+                 <div className="flex flex-col gap-3 flex-1">
+                   {[
+                     { id: "cardFabric", title: "ประเภทเนื้อผ้า", tab: "fabricTypes", image: settings?.cardFabricImage || MOCK_SETTINGS.cardFabricImage, pos: settings?.cardFabricPos || MOCK_SETTINGS.cardFabricPos },
+                     { id: "cardCurtain", title: "รูปแบบผ้าม่าน", tab: "curtainStyles", image: settings?.cardCurtainImage || MOCK_SETTINGS.cardCurtainImage, pos: settings?.cardCurtainPos || MOCK_SETTINGS.cardCurtainPos },
+                     { id: "cardWall", title: "Wall Fabric", tab: "wallFabric", image: settings?.cardWallImage || MOCK_SETTINGS.cardWallImage, pos: settings?.cardWallPos || MOCK_SETTINGS.cardWallPos }
+                   ].map((item) => (
+                     <div key={item.title} className="relative flex-1 rounded-[20px] overflow-hidden group border border-neutral-200/50 shadow-sm min-h-[120px] cursor-pointer bg-neutral-100" onClick={() => { navigateTo("Products"); setProductTab(item.tab); }}>
+                        <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
+                           <div className="w-full h-full" style={innerBgStyle(item.image, item.pos)} />
+                        </div>
+                        <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors pointer-events-none" />
+                        <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+                           <h3 className="text-white font-bold text-lg md:text-xl drop-shadow-md text-center">{renderString(item.title, 'ไม่มีชื่อ')}</h3>
+                        </div>
+                        {currentUser?.role === 'admin' && (
+                          <button onClick={(e) => { e.stopPropagation(); openEditModal("settings_home", item.id, { image: item.image, imgPos: item.pos }); }} className="absolute top-3 right-3 bg-white/90 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 hover:bg-white shadow-md z-20 transition-colors opacity-0 group-hover:opacity-100">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          </button>
+                        )}
+                     </div>
+                   ))}
+                 </div>
               </div>
-            </section>
-          </div>
+            </div>
+          </section>
         )}
 
         {/* ================= PRODUCTS PAGE ================= */}
@@ -978,7 +1211,7 @@ export default function PasayaCurtainCenterPreview() {
               {productTab === "fabricTypes" && selectedFabric && (
                 <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] animate-in fade-in">
                   <div className="grid grid-cols-2 gap-4 sm:gap-6 pb-10 content-start">
-                    {fabricTypes.filter(i => currentUser?.role === 'admin' || !i.isHidden).map(item => (
+                    {fabricTypes.filter(i => currentUser?.role === 'admin' || !i.isHidden).map((item, index) => (
                       <div key={item.id} onClick={() => setSelectedFabric(item)} className={`cursor-pointer relative w-full pt-[75%] rounded-2xl overflow-hidden group transition-all duration-200 border-2 ${selectedFabric.id === item.id ? "border-neutral-900 shadow-lg ring-2 ring-neutral-900/20" : "border-transparent hover:border-white/80 hover:shadow-sm"} ${item.isHidden ? 'opacity-50 grayscale hover:grayscale-0' : ''}`}>
                         
                         <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
@@ -987,11 +1220,17 @@ export default function PasayaCurtainCenterPreview() {
                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors pointer-events-none" />
                         
                         <div className="absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-4 text-center z-10 pointer-events-none">
-                          <div className="font-bold text-sm sm:text-base drop-shadow-md line-clamp-1" style={{ color: item.textColor || '#FFFFFF' }}>{item.title}</div>
+                          <div className="font-bold text-sm sm:text-base drop-shadow-md line-clamp-1" style={{ color: item.textColor || '#FFFFFF' }}>{renderString(item.title, 'ไม่มีชื่อ')}</div>
                         </div>
 
                         {currentUser?.role === 'admin' && (
                           <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={(e) => { e.stopPropagation(); handleMoveItem("fabricTypes", fabricTypes, index, -1, setFabricTypes); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title="เลื่อนขึ้น">
+                              ⬆️
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); handleMoveItem("fabricTypes", fabricTypes, index, 1, setFabricTypes); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title="เลื่อนลง">
+                              ⬇️
+                            </button>
                             <button onClick={(e) => { e.stopPropagation(); toggleVisibility("fabricTypes", item, item.isHidden); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title={item.isHidden ? 'แสดง' : 'ซ่อน'}>
                               {item.isHidden ? '👁️‍🗨️' : '👁️'}
                             </button>
@@ -1014,11 +1253,11 @@ export default function PasayaCurtainCenterPreview() {
                     </div>
                     <div className="p-6 sm:p-8">
                       <div className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-2">Fabric Type</div>
-                      <h3 className="text-2xl sm:text-3xl font-bold mb-4">{selectedFabric.title}</h3>
-                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6">{selectedFabric.desc}</p>
+                      <h3 className="text-2xl sm:text-3xl font-bold mb-4">{renderString(selectedFabric.title, 'ไม่มีชื่อ')}</h3>
+                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6">{renderString(selectedFabric.desc, 'ไม่มีรายละเอียด')}</p>
                       <div className="bg-white/80 rounded-[16px] p-4 mb-6 border border-white">
                         <span className="text-xs text-neutral-500 font-semibold block mb-1">เหมาะสำหรับติดตั้งที่:</span>
-                        <span className="text-sm font-bold text-neutral-800">{selectedFabric.fit}</span>
+                        <span className="text-sm font-bold text-neutral-800">{renderString(selectedFabric.fit, '-')}</span>
                       </div>
                       <div className="flex gap-3">
                         <button onClick={() => handleDeepLinkToPortfolio(selectedFabric.title)} className={`w-full ${activeButton}`}>ดูผลงานจริงที่ใช้ผ้าชนิดนี้</button>
@@ -1032,7 +1271,7 @@ export default function PasayaCurtainCenterPreview() {
               {productTab === "curtainStyles" && selectedStyle && (
                 <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] animate-in fade-in">
                   <div className="grid grid-cols-2 gap-4 sm:gap-6 pb-10 content-start">
-                    {curtainStyles.filter(i => currentUser?.role === 'admin' || !i.isHidden).map(item => (
+                    {curtainStyles.filter(i => currentUser?.role === 'admin' || !i.isHidden).map((item, index) => (
                       <div key={item.id} onClick={() => setSelectedStyle(item)} className={`cursor-pointer relative w-full pt-[75%] rounded-2xl overflow-hidden group transition-all duration-200 border-2 ${selectedStyle.id === item.id ? "border-neutral-900 shadow-lg ring-2 ring-neutral-900/20" : "border-transparent hover:border-white/80 hover:shadow-sm"} ${item.isHidden ? 'opacity-50 grayscale hover:grayscale-0' : ''}`}>
                         
                         <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
@@ -1041,10 +1280,16 @@ export default function PasayaCurtainCenterPreview() {
                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors pointer-events-none" />
                         
                         <div className="absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-4 text-center z-10 pointer-events-none">
-                          <div className="font-bold text-white text-sm sm:text-base drop-shadow-md line-clamp-1" style={{ color: item.textColor || '#FFFFFF' }}>{item.title}</div>
+                          <div className="font-bold text-white text-sm sm:text-base drop-shadow-md line-clamp-1" style={{ color: item.textColor || '#FFFFFF' }}>{renderString(item.title, 'ไม่มีชื่อ')}</div>
                         </div>
                         {currentUser?.role === 'admin' && (
                           <div className="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={(e) => { e.stopPropagation(); handleMoveItem("curtainStyles", curtainStyles, index, -1, setCurtainStyles); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title="เลื่อนขึ้น">
+                              ⬆️
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); handleMoveItem("curtainStyles", curtainStyles, index, 1, setCurtainStyles); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title="เลื่อนลง">
+                              ⬇️
+                            </button>
                             <button onClick={(e) => { e.stopPropagation(); toggleVisibility("curtainStyles", item, item.isHidden); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title={item.isHidden ? 'แสดง' : 'ซ่อน'}>
                               {item.isHidden ? '👁️‍🗨️' : '👁️'}
                             </button>
@@ -1067,11 +1312,11 @@ export default function PasayaCurtainCenterPreview() {
                     </div>
                     <div className="p-6 sm:p-8">
                       <div className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-2">Curtain Style</div>
-                      <h3 className="text-2xl sm:text-3xl font-bold mb-4">{selectedStyle.title}</h3>
-                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6">{selectedStyle.desc}</p>
+                      <h3 className="text-2xl sm:text-3xl font-bold mb-4">{renderString(selectedStyle.title, 'ไม่มีชื่อ')}</h3>
+                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6">{renderString(selectedStyle.desc, 'ไม่มีรายละเอียด')}</p>
                       <div className="flex flex-wrap gap-2 mb-6">
                         {selectedStyle.tags?.map(tag => (
-                          <span key={tag} className="px-3 py-1 bg-white border border-neutral-200 rounded-full text-xs font-bold text-neutral-700">#{tag}</span>
+                          typeof tag === 'string' && <span key={tag} className="px-3 py-1 bg-white border border-neutral-200 rounded-full text-xs font-bold text-neutral-700">#{String(tag)}</span>
                         ))}
                       </div>
                       <div className="flex gap-3">
@@ -1086,7 +1331,7 @@ export default function PasayaCurtainCenterPreview() {
               {productTab === "wallFabric" && selectedWallFabric && (
                 <div className="grid gap-6 md:grid-cols-[1fr_1.2fr] animate-in fade-in">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-10 content-start">
-                    {wallFabrics.filter(i => currentUser?.role === 'admin' || !i.isHidden).map(item => (
+                    {wallFabrics.filter(i => currentUser?.role === 'admin' || !i.isHidden).map((item, index) => (
                       <div key={item.id} onClick={() => setSelectedWallFabric(item)} className={`cursor-pointer relative aspect-[3/2] sm:aspect-[4/3] rounded-2xl overflow-hidden group transition-all duration-200 border-2 ${selectedWallFabric.id === item.id ? "border-neutral-900 shadow-lg ring-2 ring-neutral-900/20" : "border-transparent hover:border-white/80 hover:shadow-sm"} ${item.isHidden ? 'opacity-50 grayscale hover:grayscale-0' : ''}`}>
                          
                          <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
@@ -1095,16 +1340,22 @@ export default function PasayaCurtainCenterPreview() {
                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-colors pointer-events-none" />
                          
                          <div className="absolute bottom-0 left-0 p-4 pointer-events-none">
-                           <div className="font-bold text-base line-clamp-1" style={{ color: item.textColor || '#FFFFFF' }}>{item.title}</div>
-                           <div className="text-xs text-white/80 mt-1 line-clamp-1">{item.style}</div>
+                           <div className="font-bold text-base line-clamp-1" style={{ color: item.textColor || '#FFFFFF' }}>{renderString(item.title, 'ไม่มีชื่อ')}</div>
+                           <div className="text-xs text-white/80 mt-1 line-clamp-1">{renderString(item.style, '')}</div>
                          </div>
 
                          {currentUser?.role === 'admin' && (
                            <div className="absolute top-3 right-3 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <button onClick={(e) => { e.stopPropagation(); handleMoveItem("wallFabrics", wallFabrics, index, -1, setWallFabrics); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title="เลื่อนขึ้น">
+                               ⬆️
+                             </button>
+                             <button onClick={(e) => { e.stopPropagation(); handleMoveItem("wallFabrics", wallFabrics, index, 1, setWallFabrics); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title="เลื่อนลง">
+                               ⬇️
+                             </button>
                              <button onClick={(e) => { e.stopPropagation(); toggleVisibility("wallFabrics", item, item.isHidden); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title={item.isHidden ? 'แสดง' : 'ซ่อน'}>
                                {item.isHidden ? '👁️‍🗨️' : '👁️'}
                              </button>
-                             <button onClick={(e) => { e.stopPropagation(); openEditModal("wallFabrics", item.id, item); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title="แก้ไขรูป/เลื่อนตำแหน่ง">
+                             <button onClick={(e) => { e.stopPropagation(); openEditModal("wallFabrics", item.id, item); }} className="bg-white/80 p-1.5 rounded-full text-neutral-600 hover:text-neutral-900 shadow-sm" title="แก้ไขรูป">
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                               </button>
                            </div>
@@ -1122,8 +1373,8 @@ export default function PasayaCurtainCenterPreview() {
                       )}
                     </div>
                     <div className="p-6 sm:p-8">
-                      <h3 className="text-2xl font-bold mb-2">{selectedWallFabric.title}</h3>
-                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6">{selectedWallFabric.desc}</p>
+                      <h3 className="text-2xl font-bold mb-2">{renderString(selectedWallFabric.title, 'ไม่มีชื่อ')}</h3>
+                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6">{renderString(selectedWallFabric.desc, 'ไม่มีรายละเอียด')}</p>
                       <button onClick={() => handleDeepLinkToPortfolio("Wall Fabric")} className={activeButton}>ดูผลงานหน้างานจริง</button>
                     </div>
                   </div>
@@ -1145,7 +1396,7 @@ export default function PasayaCurtainCenterPreview() {
                 <input value={portfolioSearch} onChange={(e) => setPortfolioSearch(e.target.value)} className={inputClass} placeholder="ค้นหาชื่อโครงการ, สี, ประเภทผ้า, รูปแบบม่าน (เช่น Black out, ม่านม้วน, Beige)" />
                 <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2">
                   {portfolioFilters.map((filter) => (
-                    <button key={filter} onClick={() => setSelectedPortfolioFilter(filter)} className={`shrink-0 ${selectedPortfolioFilter === filter ? activeButton : softButton}`}>{filter}</button>
+                    <button key={filter} onClick={() => setSelectedPortfolioFilter(filter)} className={`shrink-0 ${selectedPortfolioFilter === filter ? activeButton : softButton}`}>{renderString(filter)}</button>
                   ))}
                   {currentUser?.role === 'admin' && (
                      <button onClick={() => setIsFilterModalOpen(true)} className="ml-auto text-xs font-bold text-neutral-500 hover:text-neutral-900 bg-white/60 px-3 py-1.5 rounded-full border border-white/80 shadow-sm shrink-0">
@@ -1193,14 +1444,23 @@ export default function PasayaCurtainCenterPreview() {
                       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between bg-white/80 z-10 border-t border-neutral-100">
                         <div>
                           <div className="font-bold text-base sm:text-lg text-neutral-900 line-clamp-1 flex items-center gap-2">
-                             {item.title} {item.isHidden && <span className="text-[10px] bg-neutral-200 px-2 py-0.5 rounded text-neutral-500">ซ่อน</span>}
+                             {renderString(item.title, 'ไม่มีชื่อ')} {item.isHidden && <span className="text-[10px] bg-neutral-200 px-2 py-0.5 rounded text-neutral-500">ซ่อน</span>}
                           </div>
-                          <div className="mt-1 text-xs text-neutral-500 line-clamp-1">{item.subtitle}</div>
+                          <div className="mt-1 text-xs text-neutral-500 line-clamp-1">{renderString(item.subtitle, 'ไม่มีคำบรรยาย')}</div>
                         </div>
-                        <div className="mt-4 flex flex-nowrap gap-1.5 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                          <span className="shrink-0 px-2 py-0.5 rounded border border-neutral-200 bg-neutral-50 text-[10px] text-neutral-600 truncate max-w-[140px]">ชนิด: {item.fabricType}</span>
-                          <span className="shrink-0 px-2 py-0.5 rounded border border-neutral-200 bg-neutral-50 text-[10px] text-neutral-600 truncate max-w-[140px]">แบบ: {item.curtainStyle}</span>
-                          <span className="shrink-0 px-2 py-0.5 rounded border border-neutral-200 bg-neutral-50 text-[10px] text-neutral-600 truncate max-w-[140px]">สี: {item.color}</span>
+                        <div className="mt-4 flex flex-col gap-1.5">
+                          <div className="flex gap-1.5 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                            <span className="shrink-0 px-2 py-0.5 rounded border border-neutral-200 bg-neutral-50 text-[10px] text-neutral-600 truncate max-w-[140px]">ทึบ: {renderString(item.fabricType, '-')}</span>
+                            <span className="shrink-0 px-2 py-0.5 rounded border border-neutral-200 bg-neutral-50 text-[10px] text-neutral-600 truncate max-w-[140px]">รุ่น: {renderString(item.model, '-')}</span>
+                            <span className="shrink-0 px-2 py-0.5 rounded border border-neutral-200 bg-neutral-50 text-[10px] text-neutral-600 truncate max-w-[140px]">สี: {renderString(item.color, '-')}</span>
+                          </div>
+                          {item.sheerFabric && (
+                            <div className="flex gap-1.5 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                              <span className="shrink-0 px-2 py-0.5 rounded border border-emerald-200/50 bg-emerald-50/50 text-[10px] text-emerald-700 truncate max-w-[140px]">โปร่ง: {renderString(item.sheerFabric, '-')}</span>
+                              <span className="shrink-0 px-2 py-0.5 rounded border border-emerald-200/50 bg-emerald-50/50 text-[10px] text-emerald-700 truncate max-w-[140px]">รุ่น: {renderString(item.sheerModel, '-')}</span>
+                              <span className="shrink-0 px-2 py-0.5 rounded border border-emerald-200/50 bg-emerald-50/50 text-[10px] text-emerald-700 truncate max-w-[140px]">สี: {renderString(item.sheerColor, '-')}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1232,7 +1492,7 @@ export default function PasayaCurtainCenterPreview() {
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${uploadStep >= item.step ? 'bg-neutral-900 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
                             {item.step}
                           </div>
-                          <span className="text-sm font-semibold">{item.text}</span>
+                          <span className="text-sm font-semibold">{renderString(item.text)}</span>
                         </div>
                       ))}
                     </div>
@@ -1278,7 +1538,7 @@ export default function PasayaCurtainCenterPreview() {
                               >
                                 <img src={uploadQueue[0].images[0]} className={`w-full h-full object-cover transition-all duration-300 ${preset.class}`} />
                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pt-8 pb-2 px-2 text-center text-white text-[10px] font-bold">
-                                  {preset.name}
+                                  {renderString(preset.name)}
                                 </div>
                               </button>
                            ))}
@@ -1310,31 +1570,64 @@ export default function PasayaCurtainCenterPreview() {
                                  )}
                                </div>
                                <div className="flex-1 grid grid-cols-2 gap-2 text-xs sm:text-sm">
-                                 <div className="col-span-2">
+                                 <div className="col-span-1">
                                     <input value={item.title} onChange={e => updateQueueItem(index, 'title', e.target.value)} className="w-full border-b border-neutral-200 px-1 py-1 outline-none font-bold text-neutral-800 placeholder:text-neutral-300 focus:border-neutral-500 transition-colors" placeholder="ชื่อผลงาน (เช่น โครงการคอนโด...)" />
                                  </div>
+                                 <div className="col-span-1">
+                                    <input value={item.type || ""} onChange={e => updateQueueItem(index, 'type', e.target.value)} className="w-full border-b border-neutral-200 px-1 py-1 outline-none font-bold text-emerald-700 placeholder:text-neutral-300 focus:border-neutral-500 transition-colors" placeholder="สถานที่ (บ้าน/คอนโด)" />
+                                 </div>
+                                 <div className="col-span-2 border-t border-neutral-100 pt-2 mt-1">
+                                    <span className="text-[10px] font-bold text-neutral-400">ม่านทึบ (Main Curtain)</span>
+                                 </div>
                                  <div>
-                                   <label className="block text-[10px] text-neutral-500 font-bold mb-0.5">รุ่น/ผ้า</label>
+                                    <select value={item.fabricType || ''} onChange={e => updateQueueItem(index, 'fabricType', e.target.value)} className="w-full border rounded-md px-2 py-1.5 outline-none bg-white">
+                                      {Array.from(new Set([item.fabricType, ...fabricTypes.map(f=>f.title), "มู่ลี่", "Wall Fabric"])).filter(Boolean).filter(v => v !== 'undefined').map(val => (
+                                        <option key={val} value={val}>{renderString(val)}</option>
+                                      ))}
+                                    </select>
+                                 </div>
+                                 <div>
+                                    <select value={item.curtainStyle || ''} onChange={e => updateQueueItem(index, 'curtainStyle', e.target.value)} className="w-full border rounded-md px-2 py-1.5 outline-none bg-white">
+                                      {Array.from(new Set([item.curtainStyle, ...curtainStyles.map(s=>s.title), "มู่ลี่ไม้", "บุผนัง"])).filter(Boolean).filter(v => v !== 'undefined').map(val => (
+                                        <option key={val} value={val}>{renderString(val)}</option>
+                                      ))}
+                                    </select>
+                                 </div>
+                                 <div>
                                    <input value={item.model} onChange={e => updateQueueItem(index, 'model', e.target.value)} className="w-full border rounded-md px-2 py-1.5 outline-none focus:border-neutral-500" placeholder="รุ่น..." />
                                  </div>
                                  <div>
-                                   <label className="block text-[10px] text-neutral-500 font-bold mb-0.5">สี</label>
                                    <input value={item.color} onChange={e => updateQueueItem(index, 'color', e.target.value)} className="w-full border rounded-md px-2 py-1.5 outline-none focus:border-neutral-500" placeholder="สี..." />
                                  </div>
-                                 <div>
-                                    <select value={item.fabricType} onChange={e => updateQueueItem(index, 'fabricType', e.target.value)} className="w-full border rounded-md px-2 py-1.5 outline-none bg-white">
-                                      {fabricTypes.map(f => <option key={f.id} value={f.title}>{f.title}</option>)}
-                                      <option value="มู่ลี่">มู่ลี่</option>
-                                      <option value="Wall Fabric">Wall Fabric</option>
-                                    </select>
+
+                                 <div className="col-span-2 border-t border-neutral-100 pt-2 mt-1 flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-emerald-500">ม่านโปร่ง (Sheer Curtain) - ไม่ต้องใส่ถ้าไม่มี</span>
                                  </div>
                                  <div>
-                                    <select value={item.curtainStyle} onChange={e => updateQueueItem(index, 'curtainStyle', e.target.value)} className="w-full border rounded-md px-2 py-1.5 outline-none bg-white">
-                                      {curtainStyles.map(s => <option key={s.id} value={s.title}>{s.title}</option>)}
-                                      <option value="มู่ลี่ไม้">มู่ลี่ไม้</option>
-                                      <option value="บุผนัง">บุผนัง</option>
+                                    <select value={item.sheerFabric || ''} onChange={e => updateQueueItem(index, 'sheerFabric', e.target.value)} className="w-full border border-emerald-200 rounded-md px-2 py-1.5 outline-none bg-emerald-50 text-emerald-800">
+                                      <option value="">-- ไม่มีผ้าโปร่ง --</option>
+                                      {Array.from(new Set([item.sheerFabric, ...fabricTypes.map(f=>f.title)])).filter(Boolean).filter(v => v !== 'undefined').map(val => (
+                                        <option key={val} value={val}>{renderString(val)}</option>
+                                      ))}
                                     </select>
                                  </div>
+                                 {item.sheerFabric && (
+                                   <>
+                                     <div>
+                                        <select value={item.sheerStyle || ''} onChange={e => updateQueueItem(index, 'sheerStyle', e.target.value)} className="w-full border border-emerald-200 rounded-md px-2 py-1.5 outline-none bg-emerald-50 text-emerald-800">
+                                          {Array.from(new Set([item.sheerStyle, ...curtainStyles.map(s=>s.title)])).filter(Boolean).filter(v => v !== 'undefined').map(val => (
+                                            <option key={val} value={val}>{renderString(val)}</option>
+                                          ))}
+                                        </select>
+                                     </div>
+                                     <div>
+                                       <input value={item.sheerModel || ''} onChange={e => updateQueueItem(index, 'sheerModel', e.target.value)} className="w-full border border-emerald-200 rounded-md px-2 py-1.5 outline-none bg-emerald-50 text-emerald-800 placeholder:text-emerald-300/70" placeholder="รุ่นผ้าโปร่ง..." />
+                                     </div>
+                                     <div>
+                                       <input value={item.sheerColor || ''} onChange={e => updateQueueItem(index, 'sheerColor', e.target.value)} className="w-full border border-emerald-200 rounded-md px-2 py-1.5 outline-none bg-emerald-50 text-emerald-800 placeholder:text-emerald-300/70" placeholder="สีผ้าโปร่ง..." />
+                                     </div>
+                                   </>
+                                 )}
                                </div>
                             </div>
                           ))}
@@ -1382,30 +1675,32 @@ export default function PasayaCurtainCenterPreview() {
                 {timelineItems.filter(i => currentUser?.role === 'admin' || !i.isHidden).map((item, index) => (
                   <div key={item.id} className={`relative group ${item.isHidden ? 'opacity-50' : ''}`}>
                     <div className="absolute -top-12 md:-top-24 left-0 md:left-4 text-[100px] md:text-[180px] font-serif font-bold text-neutral-50/80 z-0 select-none pointer-events-none transition-colors group-hover:text-neutral-100">
-                      {item.year}
+                      {renderString(item.year)}
                     </div>
                     
                     {currentUser?.role === 'admin' && (
-                      <div className={`absolute -top-4 right-0 z-30 flex gap-2 transition-opacity bg-white/90 p-2 rounded-full shadow-md border ${confirmDeleteTimelineId === item.id ? 'opacity-100 border-red-200' : 'opacity-0 group-hover:opacity-100 border-neutral-200'}`}>
-                        {confirmDeleteTimelineId === item.id ? (
-                          <div className="flex items-center gap-2 px-1 animate-in zoom-in-95">
-                            <span className="text-xs text-red-600 font-bold">ยืนยันลบ?</span>
-                            <button onClick={() => handleDeleteTimeline(item.id)} className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-bold hover:bg-red-700">ลบเลย</button>
-                            <button onClick={() => setConfirmDeleteTimelineId(null)} className="px-3 py-1 bg-neutral-200 text-neutral-700 rounded-full text-xs font-bold hover:bg-neutral-300">ยกเลิก</button>
-                          </div>
-                        ) : (
-                          <>
-                            <button onClick={(e) => { e.stopPropagation(); toggleVisibility("timeline", item, item.isHidden); }} className="p-2 text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors" title={item.isHidden ? 'แสดง' : 'ซ่อน'}>
-                              {item.isHidden ? '👁️‍🗨️' : '👁️'}
-                            </button>
-                            <button onClick={() => setTimelineModal({ isOpen: true, mode: 'edit', form: { ...item, images: item.images || [] }, rawFiles: [], newUrlInput: '' })} className="p-2 text-neutral-600 hover:text-emerald-600 bg-neutral-100 hover:bg-emerald-50 rounded-full transition-colors" title="แก้ไข">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            </button>
-                            <button onClick={() => setConfirmDeleteTimelineId(item.id)} className="p-2 text-neutral-600 hover:text-red-600 bg-neutral-100 hover:bg-red-50 rounded-full transition-colors" title="ลบ">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
-                          </>
-                        )}
+                      <div className={`absolute -top-4 right-0 z-30 flex gap-2 transition-opacity bg-white/90 p-2 rounded-full shadow-md border opacity-0 group-hover:opacity-100 border-neutral-200`}>
+                         {confirmDeleteTimelineId === item.id ? (
+                           <div className="flex items-center gap-2 px-1 animate-in zoom-in-95">
+                             <span className="text-xs text-red-600 font-bold">ยืนยันลบถาวร?</span>
+                             <button onClick={() => handleDeleteTimeline(item.id)} className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-bold hover:bg-red-700">ลบเลย</button>
+                             <button onClick={() => setConfirmDeleteTimelineId(null)} className="px-3 py-1 bg-neutral-200 text-neutral-700 rounded-full text-xs font-bold hover:bg-neutral-300">ยกเลิก</button>
+                           </div>
+                         ) : (
+                           <>
+                             <button onClick={(e) => { e.stopPropagation(); handleMoveItem("timeline", timelineItems, index, -1, setTimelineItems); }} className="p-2 text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors" title="เลื่อนขึ้น">⬆️</button>
+                             <button onClick={(e) => { e.stopPropagation(); handleMoveItem("timeline", timelineItems, index, 1, setTimelineItems); }} className="p-2 text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors" title="เลื่อนลง">⬇️</button>
+                             <button onClick={(e) => { e.stopPropagation(); toggleVisibility("timeline", item, item.isHidden); }} className="p-2 text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors" title={item.isHidden ? 'แสดง' : 'ซ่อน'}>
+                               {item.isHidden ? '👁️‍🗨️' : '👁️'}
+                             </button>
+                             <button onClick={() => setTimelineModal({ isOpen: true, mode: 'edit', form: { ...item, images: item.images || [] }, rawFiles: [], newUrlInput: '' })} className="p-2 text-neutral-600 hover:text-emerald-600 bg-neutral-100 hover:bg-emerald-50 rounded-full transition-colors" title="แก้ไข">
+                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                             </button>
+                             <button onClick={() => setConfirmDeleteTimelineId(item.id)} className="p-2 text-neutral-600 hover:text-red-600 bg-neutral-100 hover:bg-red-50 rounded-full transition-colors" title="ลบ">
+                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                             </button>
+                           </>
+                         )}
                       </div>
                     )}
 
@@ -1423,13 +1718,13 @@ export default function PasayaCurtainCenterPreview() {
                       
                       <div className={`md:col-span-5 flex flex-col justify-center ${index % 2 === 0 ? 'md:order-2' : 'md:order-1'} ${item.textAlign === 'center' ? 'items-center text-center' : item.textAlign === 'right' ? 'items-end text-right' : 'items-start text-left'}`}>
                         <div className="inline-block text-emerald-700 font-serif text-xl md:text-2xl italic mb-3">
-                          {item.year}
+                          {renderString(item.year)}
                         </div>
                         <h3 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6 font-serif flex items-center gap-2">
-                          {item.title} {item.isHidden && <span className="text-[10px] bg-neutral-200 px-2 py-0.5 rounded text-neutral-500 font-sans">ซ่อน</span>}
+                          {renderString(item.title)} {item.isHidden && <span className="text-[10px] bg-neutral-200 px-2 py-0.5 rounded text-neutral-500 font-sans">ซ่อน</span>}
                         </h3>
                         <div className="text-neutral-600 leading-relaxed text-sm md:text-base whitespace-pre-line break-words max-w-full" style={{ wordBreak: 'break-word' }}>
-                          {item.text}
+                          {renderString(item.text)}
                         </div>
                       </div>
                     </div>
@@ -1534,13 +1829,13 @@ export default function PasayaCurtainCenterPreview() {
                           const isEditing = editingUserId === user.id;
                           return (
                             <tr key={user.id} className="hover:bg-neutral-50/50 transition-colors">
-                              <td className="p-4 font-bold text-neutral-800">{user.id}</td>
+                              <td className="p-4 font-bold text-neutral-800">{String(user.id)}</td>
                               
                               <td className="p-4">
                                 {isEditing ? (
                                   <input type="text" className="w-full border border-neutral-300 rounded px-2 py-1 text-sm outline-none focus:border-neutral-500" value={editUserForm.name} onChange={e => setEditUserForm({...editUserForm, name: e.target.value})} />
                                 ) : (
-                                  <span className="text-neutral-600">{user.name}</span>
+                                  <span className="text-neutral-600">{String(user.name)}</span>
                                 )}
                               </td>
                               
@@ -1552,7 +1847,7 @@ export default function PasayaCurtainCenterPreview() {
                                   </select>
                                 ) : (
                                   <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                    {user.role}
+                                    {String(user.role)}
                                   </span>
                                 )}
                               </td>
@@ -1561,7 +1856,7 @@ export default function PasayaCurtainCenterPreview() {
                                 {isEditing ? (
                                   <input type="text" className="w-full border border-neutral-300 rounded px-2 py-1 text-sm outline-none focus:border-neutral-500" value={editUserForm.password} onChange={e => setEditUserForm({...editUserForm, password: e.target.value})} />
                                 ) : (
-                                  <span className="text-neutral-500 font-mono tracking-wider bg-neutral-100 px-2 py-1 rounded text-xs">{user.password}</span>
+                                  <span className="text-neutral-500 font-mono tracking-wider bg-neutral-100 px-2 py-1 rounded text-xs">{String(user.password)}</span>
                                 )}
                               </td>
 
@@ -1655,7 +1950,7 @@ export default function PasayaCurtainCenterPreview() {
                 <div className="flex gap-2 items-center">
                   {isConfirmingDelete ? (
                     <div className="flex gap-2 items-center bg-red-50 px-3 py-1 rounded-full border border-red-100 animate-in fade-in zoom-in-95">
-                      <span className="text-xs text-red-600 font-bold px-1">ยืนยันการลบ?</span>
+                      <span className="text-xs text-red-600 font-bold px-1">ยืนยันการลบถาวร?</span>
                       <button onClick={confirmDeleteProject} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-colors shadow-sm">ใช่, ลบเลย</button>
                       <button onClick={() => setIsConfirmingDelete(false)} className="bg-white hover:bg-neutral-100 text-neutral-600 px-4 py-1.5 rounded-full text-xs font-bold transition-colors border border-neutral-200">ยกเลิก</button>
                     </div>
@@ -1715,52 +2010,103 @@ export default function PasayaCurtainCenterPreview() {
               <div className="p-6 sm:p-8 flex flex-col justify-between bg-white">
                 {isEditingProject ? (
                   <div className="space-y-4">
-                    <div>
-                      <label className="text-xs font-bold text-neutral-500 mb-1 block">ชื่อโครงการ</label>
-                      <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.title} onChange={e => setEditProjectForm({...editProjectForm, title: e.target.value})} />
+                    <div className="grid grid-cols-2 gap-3 mb-2">
+                      <div className="col-span-1">
+                        <label className="text-xs font-bold text-neutral-500 mb-1 block">ชื่อโครงการ</label>
+                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.title || ''} onChange={e => setEditProjectForm({...editProjectForm, title: e.target.value})} />
+                      </div>
+                      <div className="col-span-1">
+                        <label className="text-xs font-bold text-neutral-500 mb-1 block">ประเภทสถานที่ (Filter)</label>
+                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.type || ''} onChange={e => setEditProjectForm({...editProjectForm, type: e.target.value})} placeholder="เช่น บ้านพักอาศัย, คอนโด" />
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2 text-xs font-bold text-neutral-400 mt-2 border-b pb-1">ม่านทึบ (Main Curtain)</div>
                       <div>
-                        <label className="text-xs font-bold text-neutral-500 mb-1 block">ชนิดผ้า</label>
-                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.fabricType} onChange={e => setEditProjectForm({...editProjectForm, fabricType: e.target.value})} />
+                        <label className="text-[10px] font-bold text-neutral-500 mb-1 block">ชนิดผ้าทึบ</label>
+                        <select value={editProjectForm.fabricType || ''} onChange={e => setEditProjectForm({...editProjectForm, fabricType: e.target.value})} className="w-full p-2 border rounded-lg text-sm bg-white">
+                          {Array.from(new Set([editProjectForm.fabricType, ...fabricTypes.map(f=>f.title), "มู่ลี่", "Wall Fabric"])).filter(Boolean).map(val => (
+                            <option key={val} value={val}>{String(val)}</option>
+                          ))}
+                        </select>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-neutral-500 mb-1 block">รูปแบบ</label>
-                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.curtainStyle} onChange={e => setEditProjectForm({...editProjectForm, curtainStyle: e.target.value})} />
+                        <label className="text-[10px] font-bold text-neutral-500 mb-1 block">รูปแบบการตัดเย็บ</label>
+                        <select value={editProjectForm.curtainStyle || ''} onChange={e => setEditProjectForm({...editProjectForm, curtainStyle: e.target.value})} className="w-full p-2 border rounded-lg text-sm bg-white">
+                          {Array.from(new Set([editProjectForm.curtainStyle, ...curtainStyles.map(s=>s.title), "มู่ลี่ไม้", "บุผนัง"])).filter(Boolean).map(val => (
+                            <option key={val} value={val}>{String(val)}</option>
+                          ))}
+                        </select>
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-neutral-500 mb-1 block">รหัส/รุ่น</label>
-                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.model} onChange={e => setEditProjectForm({...editProjectForm, model: e.target.value})} />
+                        <label className="text-[10px] font-bold text-neutral-500 mb-1 block">รหัส/รุ่น</label>
+                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.model || ''} onChange={e => setEditProjectForm({...editProjectForm, model: e.target.value})} />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-neutral-500 mb-1 block">สี</label>
-                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.color} onChange={e => setEditProjectForm({...editProjectForm, color: e.target.value})} />
+                        <label className="text-[10px] font-bold text-neutral-500 mb-1 block">สี</label>
+                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.color || ''} onChange={e => setEditProjectForm({...editProjectForm, color: e.target.value})} />
                       </div>
+
+                      <div className="col-span-2 text-xs font-bold text-emerald-500 mt-2 border-b pb-1 border-emerald-100">ม่านโปร่ง (Sheer Curtain)</div>
+                      <div>
+                        <label className="text-[10px] font-bold text-emerald-600 mb-1 block">ผ้าโปร่ง (ถ้ามี)</label>
+                        <select value={editProjectForm.sheerFabric || ''} onChange={e => setEditProjectForm({...editProjectForm, sheerFabric: e.target.value})} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-emerald-50 text-emerald-800">
+                          <option value="">-- ไม่มีผ้าโปร่ง --</option>
+                          {Array.from(new Set([editProjectForm.sheerFabric, ...fabricTypes.map(f=>f.title)])).filter(Boolean).map(val => (
+                            <option key={val} value={val}>{String(val)}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {editProjectForm.sheerFabric && (
+                        <>
+                          <div>
+                            <label className="text-[10px] font-bold text-emerald-600 mb-1 block">รูปแบบผ้าโปร่ง</label>
+                            <select value={editProjectForm.sheerStyle || ''} onChange={e => setEditProjectForm({...editProjectForm, sheerStyle: e.target.value})} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-emerald-50 text-emerald-800">
+                              {Array.from(new Set([editProjectForm.sheerStyle, ...curtainStyles.map(s=>s.title)])).filter(Boolean).map(val => (
+                                <option key={val} value={val}>{String(val)}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-emerald-600 mb-1 block">รหัส/รุ่นผ้าโปร่ง</label>
+                            <input type="text" className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-emerald-50 text-emerald-800 placeholder:text-emerald-300/70" value={editProjectForm.sheerModel || ''} onChange={e => setEditProjectForm({...editProjectForm, sheerModel: e.target.value})} placeholder="รุ่นผ้าโปร่ง..." />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-emerald-600 mb-1 block">สีผ้าโปร่ง</label>
+                            <input type="text" className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-emerald-50 text-emerald-800 placeholder:text-emerald-300/70" value={editProjectForm.sheerColor || ''} onChange={e => setEditProjectForm({...editProjectForm, sheerColor: e.target.value})} placeholder="สีผ้าโปร่ง..." />
+                          </div>
+                        </>
+                      )}
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-neutral-500 mb-1 block">รายละเอียด</label>
-                      <textarea className="w-full p-2 border rounded-lg text-sm h-24 resize-none" value={editProjectForm.description} onChange={e => setEditProjectForm({...editProjectForm, description: e.target.value})}></textarea>
+                      <label className="text-xs font-bold text-neutral-500 mb-1 block mt-2">รายละเอียดเพิ่มเติม</label>
+                      <textarea className="w-full p-2 border rounded-lg text-sm h-24 resize-none" value={editProjectForm.description || ''} onChange={e => setEditProjectForm({...editProjectForm, description: e.target.value})}></textarea>
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <h4 className="text-2xl font-bold text-neutral-900 mb-1">{selectedProject.title}</h4>
-                    <div className="text-sm font-medium text-neutral-500 mb-4">{selectedProject.subtitle}</div>
+                    <h4 className="text-2xl font-bold text-neutral-900 mb-1">{String(selectedProject.title || '')}</h4>
+                    <div className="text-sm font-medium text-neutral-500 mb-4">{String(selectedProject.subtitle || '')}</div>
                     <p className="text-sm leading-relaxed text-neutral-600 mb-6 pb-6 border-b border-neutral-100">
-                      {selectedProject.description}
+                      {String(selectedProject.description || '')}
                     </p>
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-100">
-                        <div className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold mb-1">Fabric & Style</div>
-                        <div className="text-sm font-bold text-neutral-800">{selectedProject.curtainStyle} ({selectedProject.fabricType})</div>
-                      </div>
-                      <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-100">
-                        <div className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold mb-1">Model & Color</div>
-                        <div className="text-sm font-bold text-neutral-800">{selectedProject.model} - {selectedProject.color}</div>
-                      </div>
+                    
+                    <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-100 mb-4">
+                      <div className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold mb-1">ม่านทึบ (Main Curtain)</div>
+                      <div className="text-sm font-bold text-neutral-800">{String(selectedProject.curtainStyle || '')} ({String(selectedProject.fabricType || '')})</div>
+                      <div className="text-sm text-neutral-600 mt-1">รุ่น: {String(selectedProject.model || '-')} | สี: {String(selectedProject.color || '-')}</div>
                     </div>
+
+                    {selectedProject.sheerFabric && (
+                      <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 mb-6">
+                        <div className="text-[10px] uppercase tracking-wider text-emerald-600 font-semibold mb-1">ม่านโปร่ง (Sheer Curtain)</div>
+                        <div className="text-sm font-bold text-emerald-800">{String(selectedProject.sheerStyle || 'ม่านจีบ')} ({String(selectedProject.sheerFabric || '')})</div>
+                        <div className="text-sm text-emerald-700 mt-1">รุ่น: {String(selectedProject.sheerModel || '-')} | สี: {String(selectedProject.sheerColor || '-')}</div>
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap gap-1.5 mb-8">
-                      {selectedProject.tags?.map((tag) => (
+                      {getSafeTags(selectedProject).map((tag) => (
                         <span key={tag} className="rounded-md bg-neutral-200/60 border border-neutral-200 px-2.5 py-1 text-[11px] font-medium text-neutral-600">#{tag}</span>
                       ))}
                     </div>
@@ -1772,14 +2118,14 @@ export default function PasayaCurtainCenterPreview() {
                     <button onClick={() => { 
                       setSelectedProject(null); 
                       navigateTo("Products");
-                      setProductTab(selectedProject.model.includes("Wall Fabric") ? "wallFabric" : "fabricTypes");
+                      setProductTab(String(selectedProject.model || '').includes("Wall Fabric") ? "wallFabric" : "fabricTypes");
                     }} className={`w-full py-3 ${activeButton} text-center`}>
                       ดูสเปกสินค้าที่ใช้ในงานนี้
                     </button>
                     <button onClick={() => { 
                       setSelectedProject(null); 
                       navigateTo("AI Assistant"); 
-                      setAiInput(`ช่วยสรุปจุดขายและคิดคำพูดสำหรับนำเสนอลูกค้าที่สนใจงานสไตล์ ${selectedProject.title} (ผ้า ${selectedProject.model}) ให้หน่อยค่ะ`); 
+                      setAiInput(`ช่วยสรุปจุดขายและคิดคำพูดสำหรับนำเสนอลูกค้าที่สนใจงานสไตล์ ${String(selectedProject.title || '')} (ผ้า ${String(selectedProject.model || '')}) ให้หน่อยค่ะ`); 
                     }} className={`w-full py-3 ${softButton} text-center bg-white border-neutral-200`}>
                       ให้ AI ช่วยคิด Script พรีเซนต์งานนี้
                     </button>
@@ -1851,15 +2197,23 @@ export default function PasayaCurtainCenterPreview() {
               {/* Card Aspect Toggle (เฉพาะหน้าพอร์ต) */}
               {editImageModal.type === 'portfolioCards' && (
                 <div className="flex gap-2">
-                  <button onClick={() => setEditImageModal(prev => ({...prev, cardAspect: 'landscape'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.cardAspect === 'landscape' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>แนวนอน (4:3)</button>
-                  <button onClick={() => setEditImageModal(prev => ({...prev, cardAspect: 'portrait'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.cardAspect === 'portrait' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>แนวตั้ง (3:4)</button>
+                  <button onClick={() => setEditImageModal(prev => ({...prev, cardAspect: 'landscape', previewAspect: '4:3'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.cardAspect === 'landscape' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>แนวนอน (4:3)</button>
+                  <button onClick={() => setEditImageModal(prev => ({...prev, cardAspect: 'portrait', previewAspect: '3:4'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.cardAspect === 'portrait' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>แนวตั้ง (3:4)</button>
                 </div>
               )}
 
-              {/* Preview Box with Mouse Drag Editing */}
+              {/* Preview Toggle for Products (Small Card vs Big Panel) */}
+              {['fabricTypes', 'curtainStyles', 'wallFabrics'].includes(editImageModal.type) && (
+                <div className="flex gap-2">
+                  <button onClick={() => setEditImageModal(prev => ({...prev, previewAspect: '4:3'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.previewAspect === '4:3' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>พรีวิวหน้าการ์ด (4:3)</button>
+                  <button onClick={() => setEditImageModal(prev => ({...prev, previewAspect: '16:9'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.previewAspect === '16:9' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>พรีวิวแถบขวา (16:9)</button>
+                </div>
+              )}
+
+              {/* Preview Box with Mouse Drag Editing (No Sliders) */}
               <div className="bg-emerald-50 text-emerald-700 text-xs font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-2 border border-emerald-100">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
-                <span>ลากเมาส์เพื่อเลื่อนภาพ | Scroll เพื่อซูม</span>
+                <span>ลากเมาส์เพื่อเลื่อนภาพ | หมุน Scroll เมาส์เพื่อซูม</span>
               </div>
 
               <div 
@@ -1871,7 +2225,8 @@ export default function PasayaCurtainCenterPreview() {
                 onTouchStart={handleEditTouchStart}
                 onTouchMove={handleEditTouchMove}
                 onTouchEnd={handleEditMouseUp}
-                className={`w-full rounded-2xl bg-neutral-200 border border-neutral-300 overflow-hidden relative shadow-inner mx-auto transition-all cursor-move select-none touch-none ${editImageModal.type === 'portfolioCards' && editImageModal.cardAspect === 'portrait' ? 'aspect-[3/4] w-2/3' : 'aspect-[4/3]'}`}
+                className={`w-full rounded-2xl bg-neutral-200 border border-neutral-300 overflow-hidden relative shadow-inner mx-auto transition-all cursor-move select-none touch-none`}
+                style={getPreviewStyle()}
               >
                  <div className="w-full h-full pointer-events-none" style={innerBgStyle(editImageModal.url, editImageModal.pos)} />
                  
@@ -1913,7 +2268,7 @@ export default function PasayaCurtainCenterPreview() {
             </div>
 
             <div className="flex gap-3 justify-end pt-2">
-              <button onClick={() => {setEditImageModal({ isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, pos:{x:50,y:50,zoom:1}, textColor:'#FFF', cardAspect:'landscape' }); if(fileInputRef.current) fileInputRef.current.value = "";}} className="px-5 py-2.5 rounded-full border border-neutral-300 text-neutral-600 text-sm font-medium hover:bg-neutral-50 transition-colors">ยกเลิก</button>
+              <button onClick={() => {setEditImageModal({ isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, pos:{x:50,y:50,zoom:1}, textColor:'#FFF', cardAspect:'landscape', previewAspect: '4:3', targetItem: null }); if(fileInputRef.current) fileInputRef.current.value = "";}} className="px-5 py-2.5 rounded-full border border-neutral-300 text-neutral-600 text-sm font-medium hover:bg-neutral-50 transition-colors">ยกเลิก</button>
               <button onClick={handleSaveImage} className="px-5 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors shadow-md">บันทึกรูปภาพ</button>
             </div>
           </div>
@@ -1950,7 +2305,7 @@ export default function PasayaCurtainCenterPreview() {
             <div className="space-y-2 max-h-[40vh] overflow-y-auto mb-6 pr-2">
               {portfolioFilters.map(f => (
                 <div key={f} className="flex justify-between items-center bg-neutral-50 border border-neutral-200 p-3 rounded-xl">
-                  <span className="text-sm font-semibold text-neutral-700">{f}</span>
+                  <span className="text-sm font-semibold text-neutral-700">{String(f)}</span>
                   {f !== 'ทั้งหมด' && (
                     <button 
                       onClick={() => {
