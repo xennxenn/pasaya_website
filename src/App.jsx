@@ -97,10 +97,7 @@ const MOCK_PORTFOLIO_CARDS = [
     mergedIds: ["port1"]
   },
 ];
-const MOCK_TIMELINE_ITEMS = [
-  { id: "tl1", year: "1986", title: "The Beginning", text: "ก่อตั้งบริษัท สิ่งทอซาติน จำกัด เริ่มต้นตำนานโรงทอผ้าที่เน้นคุณภาพและเทคโนโลยีการทอระดับสูง พร้อมสร้างมาตรฐานใหม่ให้กับวงการสิ่งทอในประเทศไทย", images: ["https://images.unsplash.com/photo-1616422285623-14ff804e12c5?auto=format&fit=crop&w=1200&q=80"], textAlign: "left" },
-  { id: "tl2", year: "2002", title: "Birth of PASAYA", text: "เปิดตัวแบรนด์ PASAYA อย่างเป็นทางการ สร้างปรากฏการณ์ผ้าปูที่นอนและผ้าม่านคุณภาพสูงที่คนไทยภาคภูมิใจ นำเสนอดีไซน์ที่เป็นเอกลักษณ์ผสมผสานกับนวัตกรรม", images: ["https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=80"], textAlign: "right" },
-];
+const MOCK_TIMELINE_ITEMS = [];
 
 // ================= CSS UTILITIES =================
 const glassCard = "rounded-[24px] md:rounded-[36px] border border-white/45 bg-white/30 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-3xl";
