@@ -52,13 +52,16 @@ const DEFAULT_FILTERS = ["ทั้งหมด", "ม่านลอน", "ม�
 
 const MOCK_SETTINGS = {
   heroImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
-  heroTitle: "รังสรรค์พื้นที่ในฝัน",
-  heroSubtitle: "ด้วยผ้าม่านระดับพรีเมียม",
+  heroTitle: "รังสรรค์พื้นที่ในฝัน\nด้วยผ้าม่านระดับพรีเมียม",
+  heroSubtitle: "ร่วมค้นหาสไตล์ที่ใช่ไปกับเรา ผ่านคอลเลกชันเนื้อผ้าคุณภาพสูง รูปแบบการตัดเย็บที่ประณีต และชมผลงานติดตั้งจริงเพื่อเป็นแรงบันดาลใจให้กับบ้านของคุณ",
   heroPos: { x: 50, y: 50, zoom: 1 },
+  cardFabricTitle: "ประเภทเนื้อผ้า",
   cardFabricImage: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=800&q=80",
   cardFabricPos: { x: 50, y: 50, zoom: 1 },
+  cardCurtainTitle: "รูปแบบผ้าม่าน",
   cardCurtainImage: "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=800&q=80",
   cardCurtainPos: { x: 50, y: 50, zoom: 1 },
+  cardWallTitle: "Wall Fabric",
   cardWallImage: "https://images.unsplash.com/photo-1598928506311-c95148c8ab1a?auto=format&fit=crop&w=800&q=80",
   cardWallPos: { x: 50, y: 50, zoom: 1 }
 };
@@ -112,7 +115,7 @@ const safeScale = (zoom) => {
   return isNaN(scale) ? 1 : scale;
 };
 
-// ฟังก์ชันป้องกัน Error การแครชเวลาข้อมูลมาจาก Firebase แล้วมี Format ผิดปกติ (แก้บั๊ก undefined)
+// ฟังก์ชันป้องกัน Error การแครชเวลาข้อมูลมาจาก Firebase แล้วมี Format ผิดปกติ
 const renderString = (val, fallback = '') => {
   if (val === null || val === undefined) return fallback;
   if (typeof val === 'string' && (val === "undefined" || val === "null" || val.trim() === "")) return fallback;
@@ -197,6 +200,7 @@ export default function PasayaCurtainCenterPreview() {
   const [newUserForm, setNewUserForm] = useState({ id: "", name: "", role: "employee", password: "" });
   const [editingUserId, setEditingUserId] = useState(null);
   const [editUserForm, setEditUserForm] = useState({ id: "", name: "", role: "", password: "" });
+  const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
 
   const [productTab, setProductTab] = useState("fabricTypes");
   const [selectedFabric, setSelectedFabric] = useState(null);
@@ -229,7 +233,7 @@ export default function PasayaCurtainCenterPreview() {
   const [editImageModal, setEditImageModal] = useState({ 
     isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, 
     pos: { x: 50, y: 50, zoom: 1 }, textColor: '#FFFFFF', cardAspect: 'landscape',
-    previewAspect: '4:3', targetItem: null
+    previewAspect: '4:3', targetItem: null, textTitle: '', textSubtitle: ''
   });
   const fileInputRef = useRef(null);
   const smartMediaInputRef = useRef(null);
@@ -291,7 +295,7 @@ export default function PasayaCurtainCenterPreview() {
     };
 
     const unsubSettings = onSnapshot(doc(db, "settings", "home"), (docSnap) => {
-      if (docSnap.exists()) setSettings(docSnap.data());
+      if (docSnap.exists()) setSettings({ ...MOCK_SETTINGS, ...docSnap.data() });
     });
 
     const unsubFilters = onSnapshot(doc(db, "settings", "portfolioFilters"), (docSnap) => {
@@ -416,22 +420,27 @@ export default function PasayaCurtainCenterPreview() {
 
   const handleMoveItem = async (collectionName, items, index, direction, setStateFunc) => {
     if (index + direction < 0 || index + direction >= items.length) return;
+    
     const newList = [...items];
-    const item1 = newList[index];
-    const item2 = newList[index + direction];
+    
+    // สลับค่าใน Array
+    const temp = newList[index];
+    newList[index] = newList[index + direction];
+    newList[index + direction] = temp;
 
-    const order1 = item1.order !== undefined ? item1.order : index;
-    const order2 = item2.order !== undefined ? item2.order : index + direction;
-
-    item1.order = order2;
-    item2.order = order1;
-
-    newList.sort((a,b) => a.order - b.order);
-    setStateFunc(newList); 
+    // รันเลขลำดับ (Order) ใหม่ทั้งหมดเพื่อลบปัญหาเลขชนกันแล้วเลื่อนไม่สุด
+    const updatedList = newList.map((item, idx) => ({ ...item, order: idx }));
+    
+    setStateFunc(updatedList); // Optimistic Update
 
     if (db) {
-      await setDoc(doc(db, collectionName, item1.id), { order: order2 }, { merge: true });
-      await setDoc(doc(db, collectionName, item2.id), { order: order1 }, { merge: true });
+      try {
+        await Promise.all(updatedList.map(item => 
+          setDoc(doc(db, collectionName, item.id), { order: item.order }, { merge: true })
+        ));
+      } catch (e) {
+        console.error("Reorder error", e);
+      }
     }
   };
 
@@ -523,12 +532,27 @@ export default function PasayaCurtainCenterPreview() {
   // ================= GLOBAL IMAGE EDITOR =================
   const openEditModal = (type, id, currentObj) => {
     let targetUrl = currentObj.image || '';
-    if (type === 'portfolioCards') targetUrl = currentObj.images ? currentObj.images[currentImageIndex] : '';
+    let tTitle = currentObj.title || '';
+    let tSub = currentObj.desc || currentObj.subtitle || '';
+
+    if (type === 'portfolioCards') {
+       targetUrl = currentObj.images ? currentObj.images[currentImageIndex] : '';
+    }
     if (type === 'settings_home') {
-       if (id === 'hero') targetUrl = currentObj.heroImage || MOCK_SETTINGS.heroImage;
-       else if (id === 'cardFabric') targetUrl = currentObj.cardFabricImage || MOCK_SETTINGS.cardFabricImage;
-       else if (id === 'cardCurtain') targetUrl = currentObj.cardCurtainImage || MOCK_SETTINGS.cardCurtainImage;
-       else if (id === 'cardWall') targetUrl = currentObj.cardWallImage || MOCK_SETTINGS.cardWallImage;
+       if (id === 'hero') {
+         targetUrl = currentObj.heroImage || MOCK_SETTINGS.heroImage;
+         tTitle = currentObj.heroTitle || MOCK_SETTINGS.heroTitle;
+         tSub = currentObj.heroSubtitle || MOCK_SETTINGS.heroSubtitle;
+       } else if (id === 'cardFabric') {
+         targetUrl = currentObj.cardFabricImage || MOCK_SETTINGS.cardFabricImage;
+         tTitle = currentObj.cardFabricTitle || MOCK_SETTINGS.cardFabricTitle;
+       } else if (id === 'cardCurtain') {
+         targetUrl = currentObj.cardCurtainImage || MOCK_SETTINGS.cardCurtainImage;
+         tTitle = currentObj.cardCurtainTitle || MOCK_SETTINGS.cardCurtainTitle;
+       } else if (id === 'cardWall') {
+         targetUrl = currentObj.cardWallImage || MOCK_SETTINGS.cardWallImage;
+         tTitle = currentObj.cardWallTitle || MOCK_SETTINGS.cardWallTitle;
+       }
     }
 
     setEditImageModal({ 
@@ -537,9 +561,11 @@ export default function PasayaCurtainCenterPreview() {
       fileObj: null, isSaving: false,
       pos: currentObj.imgPos || currentObj[`${id}Pos`] || { x: 50, y: 50, zoom: 1 },
       textColor: currentObj.textColor || '#FFFFFF',
+      textTitle: tTitle,
+      textSubtitle: tSub,
       cardAspect: currentObj.cardAspect || 'landscape',
-      previewAspect: '4:3', // Default preview matching the grid UI
-      targetItem: currentObj // Save entire obj reference to prevent dropping fields!
+      previewAspect: '4:3', 
+      targetItem: currentObj 
     });
   };
 
@@ -550,7 +576,7 @@ export default function PasayaCurtainCenterPreview() {
   };
 
   const handleSaveImage = async () => {
-    const { type, id, url, fileObj, pos, textColor, cardAspect, targetItem } = editImageModal;
+    const { type, id, url, fileObj, pos, textColor, cardAspect, textTitle, textSubtitle, targetItem } = editImageModal;
     if (!fileObj && !url.trim()) return;
 
     setEditImageModal(prev => ({ ...prev, isSaving: true }));
@@ -561,14 +587,16 @@ export default function PasayaCurtainCenterPreview() {
        if (uploadedUrl) finalImageUrl = uploadedUrl;
     }
 
-    const payload = { image: finalImageUrl, imgPos: pos, textColor, cardAspect };
+    const payload = { image: finalImageUrl, imgPos: pos, textColor, cardAspect, title: textTitle, desc: textSubtitle };
 
     try {
       if (type === "settings_home") {
         const updates = {
            [`${id}Image`]: finalImageUrl,
-           [`${id}Pos`]: pos
+           [`${id}Pos`]: pos,
+           [`${id}Title`]: textTitle
         };
+        if (id === 'hero') updates[`${id}Subtitle`] = textSubtitle;
         if (db) await setDoc(doc(db, "settings", "home"), updates, { merge: true });
         setSettings(prev => ({...prev, ...updates}));
       } else if (type === "portfolioCards") {
@@ -576,11 +604,9 @@ export default function PasayaCurtainCenterPreview() {
         if (pIndex > -1) {
            const newImages = [...portfolioCards[pIndex].images];
            newImages[currentImageIndex] = finalImageUrl;
-           // If editing a grouped card, we apply position only to the primary document to avoid complexity
            if (db) await setDoc(doc(db, "portfolio", id), { images: newImages, imgPos: pos, cardAspect }, { merge: true });
         }
       } else {
-        // Fallback generator to prevent erasing fields if obj was somehow missing
         const getFallbackItem = () => {
            if(type==='fabricTypes') return MOCK_FABRIC_TYPES.find(i=>i.id===id);
            if(type==='curtainStyles') return MOCK_CURTAIN_STYLES.find(i=>i.id===id);
@@ -597,8 +623,49 @@ export default function PasayaCurtainCenterPreview() {
       console.error("Save image error", e);
     }
     
-    setEditImageModal({ isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, pos:{x:50,y:50,zoom:1}, textColor:'#FFF', cardAspect:'landscape', previewAspect: '4:3', targetItem: null });
+    setEditImageModal({ isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, pos:{x:50,y:50,zoom:1}, textColor:'#FFF', cardAspect:'landscape', previewAspect: '4:3', targetItem: null, textTitle: '', textSubtitle: '' });
     if(fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleResetToDefault = () => {
+    const { type, id } = editImageModal;
+    let defTitle = '';
+    let defSub = '';
+    let defUrl = '';
+
+    if (type === 'settings_home') {
+      if (id === 'hero') {
+         defTitle = MOCK_SETTINGS.heroTitle;
+         defSub = MOCK_SETTINGS.heroSubtitle;
+         defUrl = MOCK_SETTINGS.heroImage;
+      } else if (id === 'cardFabric') {
+         defTitle = MOCK_SETTINGS.cardFabricTitle;
+         defUrl = MOCK_SETTINGS.cardFabricImage;
+      } else if (id === 'cardCurtain') {
+         defTitle = MOCK_SETTINGS.cardCurtainTitle;
+         defUrl = MOCK_SETTINGS.cardCurtainImage;
+      } else if (id === 'cardWall') {
+         defTitle = MOCK_SETTINGS.cardWallTitle;
+         defUrl = MOCK_SETTINGS.cardWallImage;
+      }
+    } else {
+      const mockList = type === 'fabricTypes' ? MOCK_FABRIC_TYPES : type === 'curtainStyles' ? MOCK_CURTAIN_STYLES : MOCK_WALL_FABRICS;
+      const found = mockList.find(i => i.id === id);
+      if (found) {
+         defTitle = found.title;
+         defSub = found.desc;
+         defUrl = found.image;
+      }
+    }
+
+    setEditImageModal(prev => ({
+      ...prev,
+      url: defUrl || prev.url,
+      pos: { x: 50, y: 50, zoom: 1 },
+      textColor: '#FFFFFF',
+      textTitle: defTitle !== undefined ? defTitle : prev.textTitle,
+      textSubtitle: defSub !== undefined ? defSub : prev.textSubtitle
+    }));
   };
 
   // Drag Handlers for Image Preview
@@ -624,10 +691,8 @@ export default function PasayaCurtainCenterPreview() {
       
       let newX = dragState.initialPosX - ((deltaX * sensitivityX) / zoom);
       let newY = dragState.initialPosY - ((deltaY * sensitivityY) / zoom);
-
-      newX = Math.max(0, Math.min(100, newX));
-      newY = Math.max(0, Math.min(100, newY));
-
+      
+      // เอาข้อจำกัดออกเพื่อเลื่อนอิสระ
       return { ...prev, pos: { ...prev.pos, x: newX, y: newY } };
     });
   };
@@ -653,8 +718,7 @@ export default function PasayaCurtainCenterPreview() {
       const zoom = safeScale(prev.pos.zoom);
       let newX = dragState.initialPosX - ((deltaX * 0.3) / zoom);
       let newY = dragState.initialPosY - ((deltaY * 0.5) / zoom);
-      newX = Math.max(0, Math.min(100, newX));
-      newY = Math.max(0, Math.min(100, newY));
+      // เอาข้อจำกัดออกเพื่อเลื่อนอิสระ
       return { ...prev, pos: { ...prev.pos, x: newX, y: newY } };
     });
   };
@@ -1013,7 +1077,14 @@ export default function PasayaCurtainCenterPreview() {
       if (mode === 'add') {
         if (db) await addDoc(collection(db, "timeline"), finalForm);
       } else {
-        if (db) await updateDoc(doc(db, "timeline", form.id), finalForm);
+        if (db) {
+          // Check if editing a MOCK item that's not in DB yet
+          if (MOCK_TIMELINE_ITEMS.find(m => m.id === form.id) && !form.id.length > 10) {
+             await setDoc(doc(db, "timeline", form.id), finalForm, { merge: true });
+          } else {
+             await updateDoc(doc(db, "timeline", form.id), finalForm);
+          }
+        }
       }
       setTimelineModal({ isOpen: false, mode: 'add', form: { id: '', year: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' });
       if(timelineFileRef.current) timelineFileRef.current.value = "";
@@ -1028,6 +1099,7 @@ export default function PasayaCurtainCenterPreview() {
   const handleDeleteTimeline = async (id) => {
     try {
       if (db) await setDoc(doc(db, "timeline", id), { isDeleted: true }, { merge: true });
+      setTimelineItems(prev => prev.filter(t => t.id !== id));
     } catch(e) { console.error(e) }
     setConfirmDeleteTimelineId(null);
   };
@@ -1137,11 +1209,11 @@ export default function PasayaCurtainCenterPreview() {
                    <div className="mb-4 inline-flex w-fit rounded-full border border-neutral-200/60 bg-emerald-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-700 backdrop-blur-md">
                      PASAYA EXPERIENCE
                    </div>
-                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                     {renderString(settings?.heroTitle || "รังสรรค์พื้นที่ในฝัน\nด้วยผ้าม่านระดับพรีเมียม").split(/<br\/>|\n/).map((txt, i) => <React.Fragment key={i}>{txt}<br/></React.Fragment>)}
+                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight whitespace-pre-line">
+                     {renderString(settings?.heroTitle || MOCK_SETTINGS.heroTitle)}
                    </h1>
-                   <p className="mt-5 text-sm md:text-base leading-relaxed text-neutral-600">
-                     {renderString(settings?.heroSubtitle || "ร่วมค้นหาสไตล์ที่ใช่ไปกับเรา ผ่านคอลเลกชันเนื้อผ้าคุณภาพสูง รูปแบบการตัดเย็บที่ประณีต และชมผลงานติดตั้งจริงเพื่อเป็นแรงบันดาลใจให้กับบ้านของคุณ")}
+                   <p className="mt-5 text-sm md:text-base leading-relaxed text-neutral-600 whitespace-pre-line">
+                     {renderString(settings?.heroSubtitle || MOCK_SETTINGS.heroSubtitle)}
                    </p>
                    <div className="mt-8 flex flex-wrap gap-3">
                      <button onClick={() => navigateTo("Products")} className={activeButton}>ชมแคตตาล็อกสินค้า</button>
@@ -1164,9 +1236,9 @@ export default function PasayaCurtainCenterPreview() {
                  </div>
                  <div className="flex flex-col gap-3 flex-1">
                    {[
-                     { id: "cardFabric", title: "ประเภทเนื้อผ้า", tab: "fabricTypes", image: settings?.cardFabricImage || MOCK_SETTINGS.cardFabricImage, pos: settings?.cardFabricPos || MOCK_SETTINGS.cardFabricPos },
-                     { id: "cardCurtain", title: "รูปแบบผ้าม่าน", tab: "curtainStyles", image: settings?.cardCurtainImage || MOCK_SETTINGS.cardCurtainImage, pos: settings?.cardCurtainPos || MOCK_SETTINGS.cardCurtainPos },
-                     { id: "cardWall", title: "Wall Fabric", tab: "wallFabric", image: settings?.cardWallImage || MOCK_SETTINGS.cardWallImage, pos: settings?.cardWallPos || MOCK_SETTINGS.cardWallPos }
+                     { id: "cardFabric", title: settings?.cardFabricTitle || MOCK_SETTINGS.cardFabricTitle, tab: "fabricTypes", image: settings?.cardFabricImage || MOCK_SETTINGS.cardFabricImage, pos: settings?.cardFabricPos || MOCK_SETTINGS.cardFabricPos },
+                     { id: "cardCurtain", title: settings?.cardCurtainTitle || MOCK_SETTINGS.cardCurtainTitle, tab: "curtainStyles", image: settings?.cardCurtainImage || MOCK_SETTINGS.cardCurtainImage, pos: settings?.cardCurtainPos || MOCK_SETTINGS.cardCurtainPos },
+                     { id: "cardWall", title: settings?.cardWallTitle || MOCK_SETTINGS.cardWallTitle, tab: "wallFabric", image: settings?.cardWallImage || MOCK_SETTINGS.cardWallImage, pos: settings?.cardWallPos || MOCK_SETTINGS.cardWallPos }
                    ].map((item) => (
                      <div key={item.title} className="relative flex-1 rounded-[20px] overflow-hidden group border border-neutral-200/50 shadow-sm min-h-[120px] cursor-pointer bg-neutral-100" onClick={() => { navigateTo("Products"); setProductTab(item.tab); }}>
                         <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
@@ -1254,7 +1326,7 @@ export default function PasayaCurtainCenterPreview() {
                     <div className="p-6 sm:p-8">
                       <div className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-2">Fabric Type</div>
                       <h3 className="text-2xl sm:text-3xl font-bold mb-4">{renderString(selectedFabric.title, 'ไม่มีชื่อ')}</h3>
-                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6">{renderString(selectedFabric.desc, 'ไม่มีรายละเอียด')}</p>
+                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6 whitespace-pre-line">{renderString(selectedFabric.desc, 'ไม่มีรายละเอียด')}</p>
                       <div className="bg-white/80 rounded-[16px] p-4 mb-6 border border-white">
                         <span className="text-xs text-neutral-500 font-semibold block mb-1">เหมาะสำหรับติดตั้งที่:</span>
                         <span className="text-sm font-bold text-neutral-800">{renderString(selectedFabric.fit, '-')}</span>
@@ -1313,10 +1385,10 @@ export default function PasayaCurtainCenterPreview() {
                     <div className="p-6 sm:p-8">
                       <div className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-2">Curtain Style</div>
                       <h3 className="text-2xl sm:text-3xl font-bold mb-4">{renderString(selectedStyle.title, 'ไม่มีชื่อ')}</h3>
-                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6">{renderString(selectedStyle.desc, 'ไม่มีรายละเอียด')}</p>
+                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6 whitespace-pre-line">{renderString(selectedStyle.desc, 'ไม่มีรายละเอียด')}</p>
                       <div className="flex flex-wrap gap-2 mb-6">
-                        {selectedStyle.tags?.map(tag => (
-                          typeof tag === 'string' && <span key={tag} className="px-3 py-1 bg-white border border-neutral-200 rounded-full text-xs font-bold text-neutral-700">#{String(tag)}</span>
+                        {getSafeTags(selectedStyle).map(tag => (
+                          <span key={tag} className="px-3 py-1 bg-white border border-neutral-200 rounded-full text-xs font-bold text-neutral-700">#{String(tag)}</span>
                         ))}
                       </div>
                       <div className="flex gap-3">
@@ -1374,7 +1446,7 @@ export default function PasayaCurtainCenterPreview() {
                     </div>
                     <div className="p-6 sm:p-8">
                       <h3 className="text-2xl font-bold mb-2">{renderString(selectedWallFabric.title, 'ไม่มีชื่อ')}</h3>
-                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6">{renderString(selectedWallFabric.desc, 'ไม่มีรายละเอียด')}</p>
+                      <p className="text-neutral-700 text-sm sm:text-base leading-relaxed mb-6 whitespace-pre-line">{renderString(selectedWallFabric.desc, 'ไม่มีรายละเอียด')}</p>
                       <button onClick={() => handleDeepLinkToPortfolio("Wall Fabric")} className={activeButton}>ดูผลงานหน้างานจริง</button>
                     </div>
                   </div>
@@ -2235,21 +2307,39 @@ export default function PasayaCurtainCenterPreview() {
                    <>
                     <div className="absolute inset-0 bg-black/20 pointer-events-none" />
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className="font-bold text-lg drop-shadow-md" style={{ color: editImageModal.textColor }}>ข้อความตัวอย่าง</span>
+                      <span className="font-bold text-lg drop-shadow-md" style={{ color: editImageModal.textColor }}>{editImageModal.textTitle || 'ข้อความตัวอย่าง'}</span>
                     </div>
                    </>
                  )}
               </div>
 
-              {/* Text Color Selector */}
-              {['fabricTypes', 'curtainStyles', 'wallFabrics'].includes(editImageModal.type) && (
-                <div className="flex items-center gap-4">
-                  <label className="text-xs font-bold text-neutral-600">สีตัวหนังสือทับรูป:</label>
-                  <div className="flex gap-2">
-                    <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#FFFFFF'}))} className={`w-6 h-6 rounded-full border-2 bg-white ${editImageModal.textColor === '#FFFFFF' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
-                    <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#000000'}))} className={`w-6 h-6 rounded-full border-2 bg-black ${editImageModal.textColor === '#000000' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
-                    <input type="color" value={editImageModal.textColor} onChange={e => setEditImageModal(prev => ({...prev, textColor: e.target.value}))} className="w-6 h-6 rounded border-0 p-0 cursor-pointer" />
+              {/* Settings and Category Editor */}
+              {['settings_home', 'fabricTypes', 'curtainStyles', 'wallFabrics'].includes(editImageModal.type) && (
+                <div className="space-y-3">
+                  <div className="h-px bg-neutral-200 w-full my-4" />
+                  
+                  {editImageModal.type !== 'settings_home' && (
+                    <div className="flex items-center gap-4">
+                      <label className="text-xs font-bold text-neutral-600">สีตัวหนังสือทับรูป:</label>
+                      <div className="flex gap-2">
+                        <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#FFFFFF'}))} className={`w-6 h-6 rounded-full border-2 bg-white ${editImageModal.textColor === '#FFFFFF' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
+                        <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#000000'}))} className={`w-6 h-6 rounded-full border-2 bg-black ${editImageModal.textColor === '#000000' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
+                        <input type="color" value={editImageModal.textColor} onChange={e => setEditImageModal(prev => ({...prev, textColor: e.target.value}))} className="w-6 h-6 rounded border-0 p-0 cursor-pointer" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-xs font-bold text-neutral-600 mb-1 block">หัวข้อ (Title)</label>
+                    <input type="text" value={editImageModal.textTitle} onChange={e => setEditImageModal(prev => ({...prev, textTitle: e.target.value}))} className={inputClass} />
                   </div>
+                  
+                  {editImageModal.type !== 'settings_home' || editImageModal.id === 'hero' ? (
+                    <div>
+                      <label className="text-xs font-bold text-neutral-600 mb-1 block">รายละเอียด (Subtitle/Description)</label>
+                      <textarea value={editImageModal.textSubtitle} onChange={e => setEditImageModal(prev => ({...prev, textSubtitle: e.target.value}))} className={`${inputClass} h-20 resize-none`} />
+                    </div>
+                  ) : null}
                 </div>
               )}
 
@@ -2267,9 +2357,10 @@ export default function PasayaCurtainCenterPreview() {
               </div>
             </div>
 
-            <div className="flex gap-3 justify-end pt-2">
-              <button onClick={() => {setEditImageModal({ isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, pos:{x:50,y:50,zoom:1}, textColor:'#FFF', cardAspect:'landscape', previewAspect: '4:3', targetItem: null }); if(fileInputRef.current) fileInputRef.current.value = "";}} className="px-5 py-2.5 rounded-full border border-neutral-300 text-neutral-600 text-sm font-medium hover:bg-neutral-50 transition-colors">ยกเลิก</button>
-              <button onClick={handleSaveImage} className="px-5 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors shadow-md">บันทึกรูปภาพ</button>
+            <div className="flex gap-2 justify-end pt-2">
+              <button onClick={handleResetToDefault} className="px-4 py-2.5 rounded-full text-neutral-500 text-xs font-bold hover:bg-neutral-100 transition-colors mr-auto">↺ คืนค่าเริ่มต้น</button>
+              <button onClick={() => {setEditImageModal({ isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, pos:{x:50,y:50,zoom:1}, textColor:'#FFF', cardAspect:'landscape', previewAspect: '4:3', targetItem: null, textTitle: '', textSubtitle: '' }); if(fileInputRef.current) fileInputRef.current.value = "";}} className="px-5 py-2.5 rounded-full border border-neutral-300 text-neutral-600 text-sm font-medium hover:bg-neutral-50 transition-colors">ยกเลิก</button>
+              <button onClick={handleSaveImage} className="px-5 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors shadow-md">บันทึก</button>
             </div>
           </div>
         </div>
