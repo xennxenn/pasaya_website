@@ -88,15 +88,7 @@ const MOCK_WALL_FABRICS = [
   { id: "wall1", order: 0, title: "Wall Fabric Signature", style: "Texture premium", desc: "ใช้แทน Wallpaper ช่วยลดเสียงก้อง เพิ่มมิติและสัมผัสที่หรูหรา", image: "https://images.unsplash.com/photo-1598928506311-c95148c8ab1a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
   { id: "wall2", order: 1, title: "Acoustic Wall Art", style: "Sound Absorbent", desc: "บุผนังซับเสียง เหมาะสำหรับห้องดูหนัง หรือห้องประชุม", image: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" }
 ];
-const MOCK_PORTFOLIO_CARDS = [
-  { 
-    id: "port1", title: "Luxury Residence", subtitle: "ม่านลอน • Dim out | โปร่ง: ม่านจีบ • Sheer", type: "บ้านพักอาศัย", fabricType: "Dim out", sheerFabric: "Sheer", sheerStyle: "ม่านจีบ", sheerModel: "Sheer White", sheerColor: "White", curtainStyle: "ม่านลอน", model: "Premium Dimout", color: "Warm Beige", 
-    tags: ["ม่านลอน", "Dim out", "Sheer", "บ้านพักอาศัย", "Warm Beige", "Luxury"], 
-    images: ["https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&w=1400&q=80", "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=1400&q=80"], 
-    description: "งานบ้านพักอาศัยระดับ Luxury โชว์ความพลิ้วไหวของเนื้อผ้า ใช้ม่านลอนคู่กับผ้าโปร่งเพื่อความนุ่มนวล สร้างบรรยากาศที่ดูแพงและอบอุ่นในเวลาเดียวกัน",
-    mergedIds: ["port1"]
-  },
-];
+const MOCK_PORTFOLIO_CARDS = [];
 const MOCK_TIMELINE_ITEMS = [];
 
 // ================= CSS UTILITIES =================
@@ -308,12 +300,18 @@ export default function PasayaCurtainCenterPreview() {
 
     const unsubPortfolio = onSnapshot(collection(db, "portfolio"), (snapshot) => {
       if (snapshot.empty) {
-        setPortfolioCards([]); 
+        setPortfolioCards(MOCK_PORTFOLIO_CARDS); 
       } else {
         const dbItems = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         const activeDbItems = dbItems.filter(d => !d.isDeleted);
         const newItems = activeDbItems.filter(d => !MOCK_PORTFOLIO_CARDS.find(mock => mock.id === d.id));
-        const mergedMocks = MOCK_PORTFOLIO_CARDS.map(mock => activeDbItems.find(d => d.id === mock.id) || mock).filter(d => !d.isDeleted);
+        
+        // เช็คข้อมูล mock จาก dbItems ทั้งหมด (รวมที่ลบแล้ว) เพื่อให้สถานะ isDeleted ทำงานได้จริง
+        const mergedMocks = MOCK_PORTFOLIO_CARDS.map(mock => {
+           const foundInDb = dbItems.find(d => d.id === mock.id);
+           return foundInDb ? foundInDb : mock;
+        }).filter(d => !d.isDeleted);
+
         setPortfolioCards([...newItems.reverse(), ...mergedMocks]);
       }
     });
