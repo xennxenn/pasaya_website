@@ -52,8 +52,8 @@ const DEFAULT_FILTERS = ["ทั้งหมด", "ม่านลอน", "ม�
 
 const MOCK_SETTINGS = {
   heroImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
-  heroTitle: "รังสรรค์พื้นที่ในฝัน\nด้วยผ้าม่านระดับพรีเมียม",
-  heroSubtitle: "ร่วมค้นหาสไตล์ที่ใช่ไปกับเรา ผ่านคอลเลกชันเนื้อผ้าคุณภาพสูง รูปแบบการตัดเย็บที่ประณีต และชมผลงานติดตั้งจริงเพื่อเป็นแรงบันดาลใจให้กับบ้านของคุณ",
+  heroTitle: "รังสรรค์พื้นที่ในฝัน",
+  heroSubtitle: "ด้วยผ้าม่านระดับพรีเมียม",
   heroPos: { x: 50, y: 50, zoom: 1 },
   cardFabricTitle: "ประเภทเนื้อผ้า",
   cardFabricImage: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=800&q=80",
@@ -107,10 +107,13 @@ const safeScale = (zoom) => {
 // ฟังก์ชันป้องกัน Error การแครชเวลาข้อมูลมาจาก Firebase แล้วมี Format ผิดปกติ
 const renderString = (val, fallback = '') => {
   if (val === null || val === undefined) return fallback;
-  if (typeof val === 'string' && (val === "undefined" || val === "null" || val.trim() === "")) return fallback;
-  if (typeof val === 'string') return val;
-  if (typeof val === 'number') return String(val);
-  return fallback;
+  if (typeof val === 'object') {
+    if (Array.isArray(val)) return val.join(', ');
+    return fallback;
+  }
+  const str = String(val).trim();
+  if (str === "undefined" || str === "null" || str === "") return fallback;
+  return str;
 };
 
 // ฟังก์ชันลบเว้นวรรคและตัวพิมพ์เล็กใหญ่เพื่อเช็คการซ้ำซ้อนอย่างแม่นยำที่สุด
@@ -184,11 +187,14 @@ export default function PasayaCurtainCenterPreview() {
   const [portfolioFilters, setPortfolioFilters] = useState(DEFAULT_FILTERS);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [newFilterKeyword, setNewFilterKeyword] = useState("");
+  const [editingFilterIndex, setEditingFilterIndex] = useState(null);
+  const [editFilterValue, setEditFilterValue] = useState("");
 
   // Forms & Selections
   const [newUserForm, setNewUserForm] = useState({ id: "", name: "", role: "employee", password: "" });
   const [editingUserId, setEditingUserId] = useState(null);
   const [editUserForm, setEditUserForm] = useState({ id: "", name: "", role: "", password: "" });
+  const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
 
   const [productTab, setProductTab] = useState("fabricTypes");
   const [selectedFabric, setSelectedFabric] = useState(null);
@@ -205,7 +211,7 @@ export default function PasayaCurtainCenterPreview() {
   const [editProjectForm, setEditProjectForm] = useState({});
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [viewImage, setViewImage] = useState(null); // เพิ่ม State สำหรับภาพที่จะดูเต็มจอ
+  const [viewImage, setViewImage] = useState(null); 
   
   const [aiInput, setAiInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
@@ -502,12 +508,20 @@ export default function PasayaCurtainCenterPreview() {
     }
     if (portfolioSearch.trim()) {
       const q = portfolioSearch.toLowerCase();
+      // ค้นหาครอบคลุมทุกจุดตามที่ผู้ใช้ร้องขอ
       base = base.filter(item => 
         String(item.title || "").toLowerCase().includes(q) || 
         String(item.subtitle || "").toLowerCase().includes(q) ||
-        getSafeTags(item).some(tag => String(tag).toLowerCase().includes(q)) || 
         String(item.model || "").toLowerCase().includes(q) ||
-        String(item.color || "").toLowerCase().includes(q)
+        String(item.color || "").toLowerCase().includes(q) ||
+        String(item.fabricType || "").toLowerCase().includes(q) ||
+        String(item.curtainStyle || "").toLowerCase().includes(q) ||
+        String(item.sheerModel || "").toLowerCase().includes(q) ||
+        String(item.sheerColor || "").toLowerCase().includes(q) ||
+        String(item.sheerFabric || "").toLowerCase().includes(q) ||
+        String(item.sheerStyle || "").toLowerCase().includes(q) ||
+        String(item.type || "").toLowerCase().includes(q) ||
+        getSafeTags(item).some(tag => String(tag).toLowerCase().includes(q))
       );
     }
     return base;
@@ -2405,11 +2419,11 @@ export default function PasayaCurtainCenterPreview() {
       {/* ================= FILTER MANAGEMENT MODAL (Admin Only) ================= */}
       {isFilterModalOpen && currentUser?.role === 'admin' && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 relative">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 relative max-h-[80vh] flex flex-col">
             <h3 className="text-xl font-bold mb-2 text-neutral-800">จัดการ Filter ผลงาน</h3>
             <p className="text-sm text-neutral-500 mb-5">เพิ่ม ลบ หรือแก้ไขตัวกรองในหน้าพอร์ตฟอลิโอ</p>
 
-            <div className="flex gap-2 mb-6">
+            <div className="flex gap-2 mb-4 shrink-0">
               <input 
                 type="text" value={newFilterKeyword} onChange={e => setNewFilterKeyword(e.target.value)} 
                 className="flex-1 border border-neutral-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500" 
@@ -2423,33 +2437,78 @@ export default function PasayaCurtainCenterPreview() {
                     setNewFilterKeyword("");
                   }
                 }}
-                className="px-4 py-2 bg-neutral-900 text-white rounded-xl text-sm font-bold"
+                className="px-4 py-2 bg-neutral-900 text-white rounded-xl text-sm font-bold shadow-md hover:bg-neutral-800 transition-colors"
               >
                 เพิ่ม
               </button>
             </div>
 
-            <div className="space-y-2 max-h-[40vh] overflow-y-auto mb-6 pr-2">
-              {portfolioFilters.map(f => (
-                <div key={f} className="flex justify-between items-center bg-neutral-50 border border-neutral-200 p-3 rounded-xl">
-                  <span className="text-sm font-semibold text-neutral-700">{String(f)}</span>
-                  {f !== 'ทั้งหมด' && (
-                    <button 
-                      onClick={() => {
-                        const newList = portfolioFilters.filter(x => x !== f);
-                        if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
-                      }}
-                      className="text-xs text-red-500 hover:text-red-700 font-bold px-2 py-1 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                    >
-                      ลบทิ้ง
-                    </button>
+            <div className="flex-1 overflow-y-auto space-y-2 pr-2 pb-4">
+              {portfolioFilters.map((f, index) => (
+                <div key={`${f}-${index}`} className="flex justify-between items-center bg-neutral-50 border border-neutral-200 p-3 rounded-xl">
+                  {editingFilterIndex === index ? (
+                    <input
+                      type="text"
+                      className="flex-1 border border-neutral-300 rounded px-2 py-1 text-sm outline-none focus:border-emerald-500 mr-2"
+                      value={editFilterValue}
+                      onChange={(e) => setEditFilterValue(e.target.value)}
+                    />
+                  ) : (
+                    <span className="text-sm font-semibold text-neutral-700">{String(f)}</span>
                   )}
+                  
+                  <div className="flex gap-1 shrink-0">
+                    {editingFilterIndex === index ? (
+                      <>
+                        <button onClick={() => {
+                          const val = editFilterValue.trim();
+                          if(val) {
+                            const newList = [...portfolioFilters];
+                            newList[index] = val;
+                            if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
+                          }
+                          setEditingFilterIndex(null);
+                        }} className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg font-bold transition-colors">บันทึก</button>
+                        <button onClick={() => setEditingFilterIndex(null)} className="text-xs bg-neutral-200 hover:bg-neutral-300 text-neutral-700 px-3 py-1.5 rounded-lg font-bold transition-colors">ยกเลิก</button>
+                      </>
+                    ) : (
+                      f !== 'ทั้งหมด' && (
+                        <>
+                          <button onClick={() => {
+                            if (index > 1) { 
+                              const newList = [...portfolioFilters];
+                              const temp = newList[index];
+                              newList[index] = newList[index - 1];
+                              newList[index - 1] = temp;
+                              if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
+                            }
+                          }} className={`text-xs bg-neutral-200 hover:bg-neutral-300 px-2 py-1.5 rounded-lg transition-colors ${index <= 1 ? 'opacity-30 cursor-not-allowed' : ''}`} title="เลื่อนขึ้น">⬆️</button>
+                          
+                          <button onClick={() => {
+                            if (index < portfolioFilters.length - 1) {
+                              const newList = [...portfolioFilters];
+                              const temp = newList[index];
+                              newList[index] = newList[index + 1];
+                              newList[index + 1] = temp;
+                              if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
+                            }
+                          }} className={`text-xs bg-neutral-200 hover:bg-neutral-300 px-2 py-1.5 rounded-lg transition-colors ${index >= portfolioFilters.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`} title="เลื่อนลง">⬇️</button>
+                          
+                          <button onClick={() => { setEditingFilterIndex(index); setEditFilterValue(String(f)); }} className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold px-3 py-1.5 rounded-lg transition-colors ml-1">แก้ไข</button>
+                          <button onClick={() => {
+                            const newList = portfolioFilters.filter((_, i) => i !== index);
+                            if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
+                          }} className="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-lg transition-colors">ลบ</button>
+                        </>
+                      )
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-neutral-100">
-              <button onClick={() => setIsFilterModalOpen(false)} className="px-6 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors shadow-md">เสร็จสิ้น</button>
+            <div className="flex justify-end pt-4 border-t border-neutral-100 shrink-0">
+              <button onClick={() => {setIsFilterModalOpen(false); setEditingFilterIndex(null);}} className="px-6 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors shadow-md">เสร็จสิ้น</button>
             </div>
           </div>
         </div>
