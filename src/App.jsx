@@ -189,7 +189,6 @@ export default function PasayaCurtainCenterPreview() {
   const [newUserForm, setNewUserForm] = useState({ id: "", name: "", role: "employee", password: "" });
   const [editingUserId, setEditingUserId] = useState(null);
   const [editUserForm, setEditUserForm] = useState({ id: "", name: "", role: "", password: "" });
-  const [confirmDeleteUserId, setConfirmDeleteUserId] = useState(null);
 
   const [productTab, setProductTab] = useState("fabricTypes");
   const [selectedFabric, setSelectedFabric] = useState(null);
@@ -613,9 +612,11 @@ export default function PasayaCurtainCenterPreview() {
         if (pIndex > -1) {
            const newImages = [...portfolioCards[pIndex].images];
            newImages[currentImageIndex] = finalImageUrl;
+           // If editing a grouped card, we apply position only to the primary document to avoid complexity
            if (db) await setDoc(doc(db, "portfolio", id), { images: newImages, imgPos: pos, cardAspect }, { merge: true });
         }
       } else {
+        // Fallback generator to prevent erasing fields if obj was somehow missing
         const getFallbackItem = () => {
            if(type==='fabricTypes') return MOCK_FABRIC_TYPES.find(i=>i.id===id);
            if(type==='curtainStyles') return MOCK_CURTAIN_STYLES.find(i=>i.id===id);
@@ -1108,7 +1109,6 @@ export default function PasayaCurtainCenterPreview() {
   const handleDeleteTimeline = async (id) => {
     try {
       if (db) await setDoc(doc(db, "timeline", id), { isDeleted: true }, { merge: true });
-      setTimelineItems(prev => prev.filter(t => t.id !== id));
     } catch(e) { console.error(e) }
     setConfirmDeleteTimelineId(null);
   };
@@ -2028,6 +2028,12 @@ export default function PasayaCurtainCenterPreview() {
       {/* ================= PORTFOLIO PROJECT MODAL ================= */}
       {selectedProject && !isFullscreen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-neutral-900/60 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-300">
+          
+          {/* Preload images for fast sliding */}
+          <div className="hidden">
+             {selectedProject.images.map(url => <img key={url} src={url} alt="preload" />)}
+          </div>
+
           <div className="max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-t-[32px] sm:rounded-[32px] bg-white shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 relative flex flex-col">
             
             <div className="sticky top-0 z-20 flex flex-wrap justify-between items-center gap-2 p-4 bg-white/90 backdrop-blur-lg border-b border-neutral-100 shadow-sm">
@@ -2361,33 +2367,15 @@ export default function PasayaCurtainCenterPreview() {
                  )}
               </div>
 
-              {/* Settings and Category Editor */}
-              {['settings_home', 'fabricTypes', 'curtainStyles', 'wallFabrics'].includes(editImageModal.type) && (
-                <div className="space-y-3">
-                  <div className="h-px bg-neutral-200 w-full my-4" />
-                  
-                  {editImageModal.type !== 'settings_home' && (
-                    <div className="flex items-center gap-4">
-                      <label className="text-xs font-bold text-neutral-600">สีตัวหนังสือทับรูป:</label>
-                      <div className="flex gap-2">
-                        <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#FFFFFF'}))} className={`w-6 h-6 rounded-full border-2 bg-white ${editImageModal.textColor === '#FFFFFF' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
-                        <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#000000'}))} className={`w-6 h-6 rounded-full border-2 bg-black ${editImageModal.textColor === '#000000' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
-                        <input type="color" value={editImageModal.textColor} onChange={e => setEditImageModal(prev => ({...prev, textColor: e.target.value}))} className="w-6 h-6 rounded border-0 p-0 cursor-pointer" />
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="text-xs font-bold text-neutral-600 mb-1 block">หัวข้อ (Title)</label>
-                    <input type="text" value={editImageModal.textTitle} onChange={e => setEditImageModal(prev => ({...prev, textTitle: e.target.value}))} className={inputClass} />
+              {/* Text Color Selector */}
+              {['fabricTypes', 'curtainStyles', 'wallFabrics'].includes(editImageModal.type) && (
+                <div className="flex items-center gap-4">
+                  <label className="text-xs font-bold text-neutral-600">สีตัวหนังสือทับรูป:</label>
+                  <div className="flex gap-2">
+                    <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#FFFFFF'}))} className={`w-6 h-6 rounded-full border-2 bg-white ${editImageModal.textColor === '#FFFFFF' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
+                    <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#000000'}))} className={`w-6 h-6 rounded-full border-2 bg-black ${editImageModal.textColor === '#000000' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
+                    <input type="color" value={editImageModal.textColor} onChange={e => setEditImageModal(prev => ({...prev, textColor: e.target.value}))} className="w-6 h-6 rounded border-0 p-0 cursor-pointer" />
                   </div>
-                  
-                  {editImageModal.type !== 'settings_home' || editImageModal.id === 'hero' ? (
-                    <div>
-                      <label className="text-xs font-bold text-neutral-600 mb-1 block">รายละเอียด (Subtitle/Description)</label>
-                      <textarea value={editImageModal.textSubtitle} onChange={e => setEditImageModal(prev => ({...prev, textSubtitle: e.target.value}))} className={`${inputClass} h-20 resize-none`} />
-                    </div>
-                  ) : null}
                 </div>
               )}
 
