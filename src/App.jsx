@@ -52,8 +52,8 @@ const DEFAULT_FILTERS = ["ทั้งหมด", "ม่านลอน", "ม�
 
 const MOCK_SETTINGS = {
   heroImage: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
-  heroTitle: "รังสรรค์พื้นที่ในฝัน",
-  heroSubtitle: "ด้วยผ้าม่านระดับพรีเมียม",
+  heroTitle: "รังสรรค์พื้นที่ในฝัน\nด้วยผ้าม่านระดับพรีเมียม",
+  heroSubtitle: "ร่วมค้นหาสไตล์ที่ใช่ไปกับเรา ผ่านคอลเลกชันเนื้อผ้าคุณภาพสูง รูปแบบการตัดเย็บที่ประณีต และชมผลงานติดตั้งจริงเพื่อเป็นแรงบันดาลใจให้กับบ้านของคุณ",
   heroPos: { x: 50, y: 50, zoom: 1 },
   cardFabricTitle: "ประเภทเนื้อผ้า",
   cardFabricImage: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=800&q=80",
@@ -63,7 +63,8 @@ const MOCK_SETTINGS = {
   cardCurtainPos: { x: 50, y: 50, zoom: 1 },
   cardWallTitle: "Wall Fabric",
   cardWallImage: "https://images.unsplash.com/photo-1598928506311-c95148c8ab1a?auto=format&fit=crop&w=800&q=80",
-  cardWallPos: { x: 50, y: 50, zoom: 1 }
+  cardWallPos: { x: 50, y: 50, zoom: 1 },
+  showStandard: true
 };
 const MOCK_FABRIC_TYPES = [
   { id: "blackout", order: 0, title: "Black out", desc: "กันแสง 100% ให้ความเป็นส่วนตัวสูงสุด และช่วยลดอุณหภูมิห้อง", fit: "ห้องนอน, ห้องดูหนัง, โรงแรม", image: "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?auto=format&fit=crop&w=800&q=80", textColor: "#FFFFFF" },
@@ -96,7 +97,6 @@ const glassCard = "rounded-[24px] md:rounded-[36px] border border-white/45 bg-wh
 const softButton = "rounded-full border border-white/55 bg-white/45 px-4 py-2 text-sm text-neutral-700 backdrop-blur-xl transition hover:bg-white/65 hover:shadow-sm";
 const activeButton = "rounded-full bg-neutral-900 px-4 py-2 text-sm text-white shadow-lg transition hover:bg-neutral-800";
 const inputClass = "w-full rounded-2xl border border-white/55 bg-white/55 px-4 py-3 text-sm text-neutral-800 outline-none focus:border-neutral-400 focus:bg-white/80 transition placeholder:text-neutral-400";
-const aiFilterClass = "filter brightness-[1.1] contrast-[1.15] saturate-[1.25] drop-shadow-sm";
 
 // ================= RENDER HELPERS =================
 const safeScale = (zoom) => {
@@ -179,6 +179,7 @@ export default function PasayaCurtainCenterPreview() {
   const [usersList, setUsersList] = useState(MOCK_USERS);
   const [portfolioCards, setPortfolioCards] = useState(MOCK_PORTFOLIO_CARDS);
   const [timelineItems, setTimelineItems] = useState(MOCK_TIMELINE_ITEMS);
+  const [standardItems, setStandardItems] = useState([]);
   const [fabricTypes, setFabricTypes] = useState(MOCK_FABRIC_TYPES);
   const [curtainStyles, setCurtainStyles] = useState(MOCK_CURTAIN_STYLES);
   const [wallFabrics, setWallFabrics] = useState(MOCK_WALL_FABRICS);
@@ -224,7 +225,7 @@ export default function PasayaCurtainCenterPreview() {
   const [uploadQueue, setUploadQueue] = useState([]); 
   const [isUploadingToCloud, setIsUploadingToCloud] = useState(false);
 
-  // Edit Modal (Global for changing images, zoom/pan, text color, card aspect, and preview ratio)
+  // Edit Modal
   const [editImageModal, setEditImageModal] = useState({ 
     isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, 
     pos: { x: 50, y: 50, zoom: 1 }, textColor: '#FFFFFF', cardAspect: 'landscape',
@@ -238,13 +239,29 @@ export default function PasayaCurtainCenterPreview() {
   const [dragState, setDragState] = useState({ isDragging: false, startX: 0, startY: 0, initialPosX: 50, initialPosY: 50 });
   const previewRef = useRef(null);
 
-  // Timeline Modal
-  const [timelineModal, setTimelineModal] = useState({ isOpen: false, mode: 'add', form: { id: '', year: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' });
+  // Timeline & Standard Modal
+  const [timelineModal, setTimelineModal] = useState({ isOpen: false, type: 'timeline', mode: 'add', form: { id: '', year: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' });
   const [confirmDeleteTimelineId, setConfirmDeleteTimelineId] = useState(null);
   const timelineFileRef = useRef(null);
 
+  // ================= LOCAL STORAGE PERSISTENCE =================
+  useEffect(() => {
+    const cachedUser = localStorage.getItem('pasaya_user');
+    if (cachedUser) {
+      try {
+        setCurrentUser(JSON.parse(cachedUser));
+      } catch (e) {
+        console.error("Failed to parse cached user", e);
+      }
+    }
+  }, []);
+
   const getNavItems = () => {
-    let items = ["Home", "Products", "Portfolio", "About", "AI Assistant"];
+    let items = ["Home", "Products", "Portfolio"];
+    if (settings?.showStandard !== false || currentUser?.role === 'admin') {
+      items.push("PASAYA Standard");
+    }
+    items.push("About", "AI Assistant");
     if (currentUser?.role === 'admin') items.push("Manage Users");
     return items;
   };
@@ -270,7 +287,6 @@ export default function PasayaCurtainCenterPreview() {
   useEffect(() => {
     if (!db) return;
 
-    // Use isDeleted flag to completely ignore deleted items AND clean up "undefined" strings
     const mergeData = (dbList, mockList) => {
       const activeDbList = dbList.filter(d => !d.isDeleted);
       const merged = mockList.map(mock => {
@@ -311,13 +327,10 @@ export default function PasayaCurtainCenterPreview() {
         const dbItems = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         const activeDbItems = dbItems.filter(d => !d.isDeleted);
         const newItems = activeDbItems.filter(d => !MOCK_PORTFOLIO_CARDS.find(mock => mock.id === d.id));
-        
-        // เช็คข้อมูล mock จาก dbItems ทั้งหมด (รวมที่ลบแล้ว) เพื่อให้สถานะ isDeleted ทำงานได้จริง
         const mergedMocks = MOCK_PORTFOLIO_CARDS.map(mock => {
            const foundInDb = dbItems.find(d => d.id === mock.id);
            return foundInDb ? foundInDb : mock;
         }).filter(d => !d.isDeleted);
-
         setPortfolioCards([...newItems.reverse(), ...mergedMocks]);
       }
     });
@@ -326,6 +339,11 @@ export default function PasayaCurtainCenterPreview() {
       const dbItems = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       const merged = mergeData(dbItems, MOCK_TIMELINE_ITEMS);
       setTimelineItems(merged.sort((a,b) => String(a.year).localeCompare(String(b.year))));
+    });
+
+    const unsubStandard = onSnapshot(collection(db, "standard"), (snapshot) => {
+      const dbItems = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setStandardItems(dbItems.filter(d => !d.isDeleted).sort((a,b) => (a.order || 0) - (b.order || 0)));
     });
 
     const unsubFabrics = onSnapshot(collection(db, "fabricTypes"), (snapshot) => {
@@ -344,7 +362,7 @@ export default function PasayaCurtainCenterPreview() {
     });
 
     return () => {
-      unsubSettings(); unsubFilters(); unsubUsers(); unsubPortfolio(); unsubTimeline();
+      unsubSettings(); unsubFilters(); unsubUsers(); unsubPortfolio(); unsubTimeline(); unsubStandard();
       unsubFabrics(); unsubStyles(); unsubWalls();
     };
   }, []);
@@ -372,7 +390,6 @@ export default function PasayaCurtainCenterPreview() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [aiMessages, isAiTyping]);
 
-  // ซิงค์ข้อมูลพรีวิวให้เป็นภาพล่าสุดเสมอเมื่อดึงข้อมูลใหม่จาก Firebase
   useEffect(() => {
     if (fabricTypes.length > 0) {
       setSelectedFabric(prev => prev ? (fabricTypes.find(f => f.id === prev.id) || fabricTypes[0]) : fabricTypes[0]);
@@ -404,6 +421,7 @@ export default function PasayaCurtainCenterPreview() {
     
     if (user) {
       setCurrentUser(user);
+      localStorage.setItem('pasaya_user', JSON.stringify(user));
       setLoginError("");
     } else {
       setLoginError("รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง");
@@ -412,6 +430,7 @@ export default function PasayaCurtainCenterPreview() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    localStorage.removeItem('pasaya_user');
     setActivePage("Home");
     setNavHistory([]);
     setLoginForm({ id: "", password: "" });
@@ -436,16 +455,12 @@ export default function PasayaCurtainCenterPreview() {
     if (index + direction < 0 || index + direction >= items.length) return;
     
     const newList = [...items];
-    
-    // สลับค่าใน Array
     const temp = newList[index];
     newList[index] = newList[index + direction];
     newList[index + direction] = temp;
 
-    // รันเลขลำดับ (Order) ใหม่ทั้งหมดเพื่อลบปัญหาเลขชนกันแล้วเลื่อนไม่สุด
     const updatedList = newList.map((item, idx) => ({ ...item, order: idx }));
-    
-    setStateFunc(updatedList); // Optimistic Update
+    setStateFunc(updatedList); 
 
     if (db) {
       try {
@@ -458,7 +473,6 @@ export default function PasayaCurtainCenterPreview() {
     }
   };
 
-  // Dynamic Grouping of Portfolio Cards
   const groupedPortfolioCards = useMemo(() => {
     const grouped = [];
     const map = new Map();
@@ -468,14 +482,11 @@ export default function PasayaCurtainCenterPreview() {
         
         if (map.has(key)) {
             const existing = map.get(key);
-            // Merge images
             const newImages = item.images.filter(img => !existing.images.includes(img));
             existing.images = [...existing.images, ...newImages];
-            // Merge tags
             existing.tags = getSafeTags(existing).concat(getSafeTags(item));
             existing.tags = Array.from(new Set(existing.tags));
             
-            // Merge types (บ้าน/คอนโด)
             const typeSet = new Set([
               ...(existing.type ? String(existing.type).split(',').map(s=>s.trim()) : []),
               ...(item.type ? String(item.type).split(',').map(s=>s.trim()) : [])
@@ -508,7 +519,6 @@ export default function PasayaCurtainCenterPreview() {
     }
     if (portfolioSearch.trim()) {
       const q = portfolioSearch.toLowerCase();
-      // ค้นหาครอบคลุมทุกจุดตามที่ผู้ใช้ร้องขอ
       base = base.filter(item => 
         String(item.title || "").toLowerCase().includes(q) || 
         String(item.subtitle || "").toLowerCase().includes(q) ||
@@ -626,11 +636,9 @@ export default function PasayaCurtainCenterPreview() {
         if (pIndex > -1) {
            const newImages = [...portfolioCards[pIndex].images];
            newImages[currentImageIndex] = finalImageUrl;
-           // If editing a grouped card, we apply position only to the primary document to avoid complexity
            if (db) await setDoc(doc(db, "portfolio", id), { images: newImages, imgPos: pos, cardAspect }, { merge: true });
         }
       } else {
-        // Fallback generator to prevent erasing fields if obj was somehow missing
         const getFallbackItem = () => {
            if(type==='fabricTypes') return MOCK_FABRIC_TYPES.find(i=>i.id===id);
            if(type==='curtainStyles') return MOCK_CURTAIN_STYLES.find(i=>i.id===id);
@@ -716,7 +724,6 @@ export default function PasayaCurtainCenterPreview() {
       let newX = dragState.initialPosX - ((deltaX * sensitivityX) / zoom);
       let newY = dragState.initialPosY - ((deltaY * sensitivityY) / zoom);
       
-      // เอาข้อจำกัดออกเพื่อเลื่อนอิสระ
       return { ...prev, pos: { ...prev.pos, x: newX, y: newY } };
     });
   };
@@ -742,12 +749,10 @@ export default function PasayaCurtainCenterPreview() {
       const zoom = safeScale(prev.pos.zoom);
       let newX = dragState.initialPosX - ((deltaX * 0.3) / zoom);
       let newY = dragState.initialPosY - ((deltaY * 0.5) / zoom);
-      // เอาข้อจำกัดออกเพื่อเลื่อนอิสระ
       return { ...prev, pos: { ...prev.pos, x: newX, y: newY } };
     });
   };
 
-  // Get Aspect Ratio Style for Preview Modal (Inline style matching precise UI display)
   const getPreviewStyle = () => {
     if (editImageModal.type === "settings_home") {
        if (editImageModal.id === 'hero') return { aspectRatio: '5 / 4' };
@@ -794,7 +799,9 @@ export default function PasayaCurtainCenterPreview() {
           images: [], 
           rawFiles: [], 
           presetClass: '',
-          cardAspect: 'landscape'
+          cardAspect: 'landscape',
+          showDesc: false,
+          description: ""
         };
       }
       grouped[key].rawFiles.push(file);
@@ -814,7 +821,6 @@ export default function PasayaCurtainCenterPreview() {
   const saveBulkPortfolio = async () => {
     setIsUploadingToCloud(true);
     try {
-      // จับกลุ่มรูปภาพที่มีสเปกตรงกันภายในรอบอัปโหลดเดียวกันก่อน
       const groupedQueue = {};
       for (const item of uploadQueue) {
         const sig = getGroupKey(item);
@@ -823,7 +829,6 @@ export default function PasayaCurtainCenterPreview() {
         } else {
           groupedQueue[sig].rawFiles.push(...item.rawFiles);
           groupedQueue[sig].images.push(...item.images);
-          // Combine tags/types
           const mergedTypes = Array.from(new Set([
              ...(groupedQueue[sig].type ? String(groupedQueue[sig].type).split(',').map(s=>s.trim()) : []), 
              ...(item.type ? String(item.type).split(',').map(s=>s.trim()) : [])
@@ -834,7 +839,6 @@ export default function PasayaCurtainCenterPreview() {
 
       const uniqueItems = Object.values(groupedQueue);
 
-      // Save sequentially to avoid race conditions when matching with DB
       for (const item of uniqueItems) {
         const uploadedUrls = [];
         for (const file of item.rawFiles) {
@@ -847,6 +851,10 @@ export default function PasayaCurtainCenterPreview() {
         if (item.sheerFabric) subtitleText += ` | โปร่ง: ${item.sheerStyle || 'ม่านจีบ'} • ${item.sheerFabric}`;
 
         const itemTags = getSafeTags(item);
+        
+        const finalDescription = item.showDesc && item.description && item.description.trim() !== "" 
+          ? item.description 
+          : "ผลงานหน้างานจริง อัปโหลดผ่านระบบ Smart Media";
 
         const cardData = {
           title: item.title || "ผลงานใหม่",
@@ -864,12 +872,11 @@ export default function PasayaCurtainCenterPreview() {
           images: finalImages, 
           presetClass: item.presetClass,
           cardAspect: item.cardAspect,
-          description: "ผลงานหน้างานจริง อัปโหลดผ่านระบบ Smart Media",
+          description: finalDescription,
           createdAt: new Date().toISOString(),
           isHidden: false
         };
 
-        // ตรวจสอบว่ามีสเปกที่ตรงกันทุกประการอยู่ในฐานข้อมูลแล้วหรือไม่
         const existingMatch = groupedPortfolioCards.find(p => getGroupKey(p) === getGroupKey(item) && !p.isHidden && !p.isDeleted);
 
         if (existingMatch && db) {
@@ -899,7 +906,6 @@ export default function PasayaCurtainCenterPreview() {
     }
   };
 
-  // ================= OTHERS =================
   const confirmDeleteProject = async () => {
     try {
       if (db) {
@@ -920,7 +926,6 @@ export default function PasayaCurtainCenterPreview() {
     const uniqueTags = getSafeTags(editProjectForm);
     const updatedData = { ...editProjectForm, subtitle: newSubtitle, tags: uniqueTags };
     
-    // Remove mergedIds from payload to DB
     const { mergedIds, ...dataToSave } = updatedData;
 
     if (db) {
@@ -929,7 +934,6 @@ export default function PasayaCurtainCenterPreview() {
         
         await updateDoc(doc(db, "portfolio", primaryId), dataToSave);
         
-        // Consolidate others into the primary one by deleting them to clean up DB
         if (idsToUpdate.length > 1) {
             for (let i = 1; i < idsToUpdate.length; i++) {
                await setDoc(doc(db, "portfolio", idsToUpdate[i]), { isDeleted: true }, { merge: true });
@@ -955,7 +959,6 @@ export default function PasayaCurtainCenterPreview() {
     setIsEditingProject(false);
     setIsConfirmingDelete(false);
     
-    // Fallback sheer fields for older data
     setSelectedProject({
       ...project,
       sheerFabric: project.sheerFabric || "",
@@ -1083,8 +1086,8 @@ export default function PasayaCurtainCenterPreview() {
   };
 
   const handleSaveTimeline = async () => {
-    const { mode, form, rawFiles } = timelineModal;
-    if (!form.year || !form.title) return;
+    const { type, mode, form, rawFiles } = timelineModal;
+    if (!form.title) return;
     setIsUploadingToCloud(true);
     try {
       const uploadedUrls = [];
@@ -1096,33 +1099,38 @@ export default function PasayaCurtainCenterPreview() {
       }
       const existingUrls = form.images.filter(img => !img.startsWith('blob:'));
       const finalImages = [...existingUrls, ...uploadedUrls];
-      const finalForm = { year: form.year, title: form.title, text: form.text, textAlign: form.textAlign || "left", images: finalImages, isHidden: false };
+      const finalForm = { title: form.title, text: form.text, textAlign: form.textAlign || "left", images: finalImages, isHidden: false };
+      
+      if (type === 'timeline') finalForm.year = form.year;
+
+      const collectionName = type === 'timeline' ? "timeline" : "standard";
 
       if (mode === 'add') {
-        if (db) await addDoc(collection(db, "timeline"), finalForm);
+        if (db) await addDoc(collection(db, collectionName), finalForm);
       } else {
         if (db) {
-          // Check if editing a MOCK item that's not in DB yet
-          if (MOCK_TIMELINE_ITEMS.find(m => m.id === form.id) && !form.id.length > 10) {
-             await setDoc(doc(db, "timeline", form.id), finalForm, { merge: true });
+          const isMock = type === 'timeline' ? MOCK_TIMELINE_ITEMS.find(m => m.id === form.id) && !form.id.length > 10 : false;
+          if (isMock) {
+             await setDoc(doc(db, collectionName, form.id), finalForm, { merge: true });
           } else {
-             await updateDoc(doc(db, "timeline", form.id), finalForm);
+             await updateDoc(doc(db, collectionName, form.id), finalForm);
           }
         }
       }
-      setTimelineModal({ isOpen: false, mode: 'add', form: { id: '', year: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' });
+      setTimelineModal({ isOpen: false, type: 'timeline', mode: 'add', form: { id: '', year: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' });
       if(timelineFileRef.current) timelineFileRef.current.value = "";
     } catch (error) {
       console.error(error);
-      alert("เกิดข้อผิดพลาดในการบันทึกไทม์ไลน์");
+      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     } finally {
        setIsUploadingToCloud(false);
     }
   };
 
-  const handleDeleteTimeline = async (id) => {
+  const handleDeleteTimeline = async (id, type) => {
     try {
-      if (db) await setDoc(doc(db, "timeline", id), { isDeleted: true }, { merge: true });
+      const collectionName = type === 'timeline' ? "timeline" : "standard";
+      if (db) await setDoc(doc(db, collectionName, id), { isDeleted: true }, { merge: true });
     } catch(e) { console.error(e) }
     setConfirmDeleteTimelineId(null);
   };
@@ -1207,15 +1215,12 @@ export default function PasayaCurtainCenterPreview() {
         </header>
 
         {/* MOBILE NAV */}
-        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 flex justify-between gap-1 rounded-full border border-white/40 bg-white/80 px-2 py-2 shadow-2xl backdrop-blur-3xl">
-          {["Home", "Products", "Portfolio", "AI Assistant"].map((item) => (
-            <button key={item} onClick={() => navigateTo(item)} className={`flex-1 rounded-full py-2.5 text-[10px] font-semibold tracking-wide ${activePage === item ? "bg-neutral-900 text-white shadow-md" : "text-neutral-600"}`}>
-              {item === "AI Assistant" ? "AI" : item}
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-50 flex justify-between gap-1 rounded-full border border-white/40 bg-white/80 px-2 py-2 shadow-2xl backdrop-blur-3xl overflow-x-auto hide-scrollbar">
+          {getNavItems().map((item) => (
+            <button key={item} onClick={() => navigateTo(item)} className={`shrink-0 px-4 rounded-full py-2.5 text-[10px] font-semibold tracking-wide ${activePage === item ? "bg-neutral-900 text-white shadow-md" : "text-neutral-600"}`}>
+              {item === "AI Assistant" ? "AI" : item === "Manage Users" ? "Users" : item === "PASAYA Standard" ? "Standard" : item}
             </button>
           ))}
-          {currentUser?.role === 'admin' && (
-             <button onClick={() => navigateTo("Manage Users")} className={`flex-1 rounded-full py-2.5 text-[10px] font-semibold tracking-wide ${activePage === "Manage Users" ? "bg-neutral-900 text-white shadow-md" : "text-neutral-600"}`}>Users</button>
-          )}
         </div>
 
         {/* ================= HOME PAGE (NEW FIXED FULL-WIDTH LAYOUT) ================= */}
@@ -1497,7 +1502,14 @@ export default function PasayaCurtainCenterPreview() {
                 <p className="text-sm text-neutral-500">ใช้เป็น Reference นำเสนอลูกค้า</p>
               </div>
               <div className="w-full md:w-2/3 flex flex-col gap-3">
-                <input value={portfolioSearch} onChange={(e) => setPortfolioSearch(e.target.value)} className={inputClass} placeholder="ค้นหาชื่อโครงการ, สี, ประเภทผ้า, รูปแบบม่าน (เช่น Black out, ม่านม้วน, Beige)" />
+                <div className="relative w-full">
+                  <input value={portfolioSearch} onChange={(e) => setPortfolioSearch(e.target.value)} className={`${inputClass} pr-10`} placeholder="ค้นหาชื่อโครงการ, สี, ประเภทผ้า, รูปแบบม่าน (เช่น Black out, ม่านม้วน, Beige)" />
+                  {portfolioSearch && (
+                    <button onClick={() => setPortfolioSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-neutral-200 rounded-full text-neutral-600 hover:bg-neutral-300 transition-colors shadow-sm">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2">
                   {portfolioFilters.map((filter) => (
                     <button key={filter} onClick={() => setSelectedPortfolioFilter(filter)} className={`shrink-0 ${selectedPortfolioFilter === filter ? activeButton : softButton}`}>{renderString(filter)}</button>
@@ -1685,7 +1697,7 @@ export default function PasayaCurtainCenterPreview() {
                                  </div>
                                  <div>
                                     <select value={item.fabricType || ''} onChange={e => updateQueueItem(index, 'fabricType', e.target.value)} className="w-full border rounded-md px-2 py-1.5 outline-none bg-white">
-                                      {Array.from(new Set([item.fabricType, ...fabricTypes.map(f=>f.title), "มู่ลี่", "Wall Fabric"])).filter(Boolean).filter(v => v !== 'undefined').map(val => (
+                                      {Array.from(new Set([item.fabricType, ...fabricTypes.map(f=>f.title), "มู่ลี่", "Wall Fabric", "ม่านม้วน"])).filter(Boolean).filter(v => v !== 'undefined').map(val => (
                                         <option key={val} value={val}>{renderString(val)}</option>
                                       ))}
                                     </select>
@@ -1732,6 +1744,16 @@ export default function PasayaCurtainCenterPreview() {
                                      </div>
                                    </>
                                  )}
+
+                                 <div className="col-span-2 mt-2 pt-2 border-t border-neutral-100">
+                                    <label className="flex items-center gap-2 text-[10px] font-bold text-neutral-600 mb-2 cursor-pointer w-fit">
+                                      <input type="checkbox" checked={item.showDesc || false} onChange={e => updateQueueItem(index, 'showDesc', e.target.checked)} className="w-3.5 h-3.5 rounded text-emerald-600" />
+                                      เพิ่มรายละเอียดเพิ่มเติม (ตัวเลือก)
+                                    </label>
+                                    {item.showDesc && (
+                                      <textarea value={item.description || ''} onChange={e => updateQueueItem(index, 'description', e.target.value)} className="w-full border border-neutral-200 rounded-lg px-2 py-1.5 text-xs h-16 resize-none outline-none focus:border-neutral-500 bg-neutral-50/50" placeholder="พิมพ์รายละเอียดผลงาน..."></textarea>
+                                    )}
+                                 </div>
                                </div>
                             </div>
                           ))}
@@ -1757,6 +1779,99 @@ export default function PasayaCurtainCenterPreview() {
                 </div>
               </div>
             )}
+          </section>
+        )}
+
+        {/* ================= PASAYA STANDARD ================= */}
+        {activePage === "PASAYA Standard" && (
+          <section className="py-20 md:py-32 bg-white rounded-[36px] shadow-sm animate-in fade-in border border-neutral-100 overflow-hidden relative">
+            
+            {currentUser?.role === 'admin' && (
+              <div className="absolute top-6 right-8 z-30 bg-white border border-neutral-200 rounded-full px-4 py-2 shadow-sm flex items-center gap-3">
+                <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Visibility:</span>
+                <button onClick={() => setDoc(doc(db, "settings", "home"), { showStandard: !(settings?.showStandard ?? true) }, { merge: true })} className={`px-4 py-1.5 rounded-full text-[10px] font-bold text-white transition-colors shadow-sm ${settings?.showStandard !== false ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-red-500 hover:bg-red-600'}`}>
+                  {settings?.showStandard !== false ? '👁️ แสดงให้ทุกคนเห็น' : '👁️‍🗨️ ซ่อน (เห็นเฉพาะแอดมิน)'}
+                </button>
+              </div>
+            )}
+
+            <div className="max-w-6xl mx-auto px-6 lg:px-12">
+              <div className="text-center mb-16 md:mb-24 mt-8">
+                <div className="inline-block border border-neutral-300 px-5 py-1.5 rounded-full text-[10px] uppercase tracking-[0.3em] font-semibold text-neutral-500 mb-8">
+                  Quality & Service
+                </div>
+                <h2 className="text-5xl md:text-7xl font-serif text-neutral-900 tracking-wide mb-6">
+                  PASAYA STANDARD
+                </h2>
+                <div className="w-16 h-[1px] bg-neutral-800 mx-auto"></div>
+              </div>
+
+              <div className="space-y-24 md:space-y-32">
+                {standardItems.filter(i => currentUser?.role === 'admin' || !i.isHidden).map((item, index) => (
+                  <div key={item.id} className={`relative group ${item.isHidden ? 'opacity-50' : ''}`}>
+                    
+                    {currentUser?.role === 'admin' && (
+                      <div className={`absolute -top-4 right-0 z-30 flex gap-2 transition-opacity bg-white/90 p-2 rounded-full shadow-md border opacity-0 group-hover:opacity-100 border-neutral-200`}>
+                         {confirmDeleteTimelineId === item.id ? (
+                           <div className="flex items-center gap-2 px-1 animate-in zoom-in-95">
+                             <span className="text-xs text-red-600 font-bold">ยืนยันลบถาวร?</span>
+                             <button onClick={() => handleDeleteTimeline(item.id, 'standard')} className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-bold hover:bg-red-700">ลบเลย</button>
+                             <button onClick={() => setConfirmDeleteTimelineId(null)} className="px-3 py-1 bg-neutral-200 text-neutral-700 rounded-full text-xs font-bold hover:bg-neutral-300">ยกเลิก</button>
+                           </div>
+                         ) : (
+                           <>
+                             <button onClick={(e) => { e.stopPropagation(); handleMoveItem("standard", standardItems, index, -1, setStandardItems); }} className="p-2 text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors" title="เลื่อนขึ้น">⬆️</button>
+                             <button onClick={(e) => { e.stopPropagation(); handleMoveItem("standard", standardItems, index, 1, setStandardItems); }} className="p-2 text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors" title="เลื่อนลง">⬇️</button>
+                             <button onClick={(e) => { e.stopPropagation(); toggleVisibility("standard", item, item.isHidden); }} className="p-2 text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors" title={item.isHidden ? 'แสดง' : 'ซ่อน'}>
+                               {item.isHidden ? '👁️‍🗨️' : '👁️'}
+                             </button>
+                             <button onClick={() => setTimelineModal({ isOpen: true, type: 'standard', mode: 'edit', form: { ...item, images: item.images || [] }, rawFiles: [], newUrlInput: '' })} className="p-2 text-neutral-600 hover:text-emerald-600 bg-neutral-100 hover:bg-emerald-50 rounded-full transition-colors" title="แก้ไข">
+                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                             </button>
+                             <button onClick={() => setConfirmDeleteTimelineId(item.id)} className="p-2 text-neutral-600 hover:text-red-600 bg-neutral-100 hover:bg-red-50 rounded-full transition-colors" title="ลบ">
+                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                             </button>
+                           </>
+                         )}
+                      </div>
+                    )}
+
+                    <div className="relative z-10 grid md:grid-cols-12 gap-8 md:gap-16 items-center">
+                      <div className={`md:col-span-7 ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}>
+                        <div className={`grid gap-3 ${item.images?.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                          {item.images?.map((imgUrl, imgIdx) => (
+                            <div key={imgIdx} className={`overflow-hidden bg-neutral-100 rounded-2xl md:rounded-[40px] shadow-lg ${item.images.length === 3 && imgIdx === 0 ? 'col-span-2 aspect-[21/9]' : 'aspect-[4/3] md:aspect-[3/2]'}`}>
+                              <img src={imgUrl} className={`w-full h-full object-cover filter saturate-[0.9] hover:saturate-100 transition-all duration-700 hover:scale-105 ${item.isHidden ? 'grayscale' : ''}`} alt={`${item.title} - ${imgIdx+1}`} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className={`md:col-span-5 flex flex-col justify-center ${index % 2 === 0 ? 'md:order-2' : 'md:order-1'} ${item.textAlign === 'center' ? 'items-center text-center' : item.textAlign === 'right' ? 'items-end text-right' : 'items-start text-left'}`}>
+                        <h3 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6 font-serif flex items-center gap-2">
+                          {renderString(item.title)} {item.isHidden && <span className="text-[10px] bg-neutral-200 px-2 py-0.5 rounded text-neutral-500 font-sans">ซ่อน</span>}
+                        </h3>
+                        <div className="text-neutral-600 leading-relaxed text-sm md:text-base whitespace-pre-line break-words max-w-full" style={{ wordBreak: 'break-word' }}>
+                          {renderString(item.text)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {currentUser?.role === 'admin' && (
+                <div className="mt-24 flex justify-center">
+                  <button 
+                    onClick={() => setTimelineModal({ isOpen: true, type: 'standard', mode: 'add', form: { id: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' })}
+                    className="flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white rounded-full hover:bg-neutral-800 transition-colors shadow-lg"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    เพิ่มข้อมูลมาตรฐาน PASAYA
+                  </button>
+                </div>
+              )}
+            </div>
           </section>
         )}
 
@@ -1787,7 +1902,7 @@ export default function PasayaCurtainCenterPreview() {
                          {confirmDeleteTimelineId === item.id ? (
                            <div className="flex items-center gap-2 px-1 animate-in zoom-in-95">
                              <span className="text-xs text-red-600 font-bold">ยืนยันลบถาวร?</span>
-                             <button onClick={() => handleDeleteTimeline(item.id)} className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-bold hover:bg-red-700">ลบเลย</button>
+                             <button onClick={() => handleDeleteTimeline(item.id, 'timeline')} className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-bold hover:bg-red-700">ลบเลย</button>
                              <button onClick={() => setConfirmDeleteTimelineId(null)} className="px-3 py-1 bg-neutral-200 text-neutral-700 rounded-full text-xs font-bold hover:bg-neutral-300">ยกเลิก</button>
                            </div>
                          ) : (
@@ -1797,7 +1912,7 @@ export default function PasayaCurtainCenterPreview() {
                              <button onClick={(e) => { e.stopPropagation(); toggleVisibility("timeline", item, item.isHidden); }} className="p-2 text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 rounded-full transition-colors" title={item.isHidden ? 'แสดง' : 'ซ่อน'}>
                                {item.isHidden ? '👁️‍🗨️' : '👁️'}
                              </button>
-                             <button onClick={() => setTimelineModal({ isOpen: true, mode: 'edit', form: { ...item, images: item.images || [] }, rawFiles: [], newUrlInput: '' })} className="p-2 text-neutral-600 hover:text-emerald-600 bg-neutral-100 hover:bg-emerald-50 rounded-full transition-colors" title="แก้ไข">
+                             <button onClick={() => setTimelineModal({ isOpen: true, type: 'timeline', mode: 'edit', form: { ...item, images: item.images || [] }, rawFiles: [], newUrlInput: '' })} className="p-2 text-neutral-600 hover:text-emerald-600 bg-neutral-100 hover:bg-emerald-50 rounded-full transition-colors" title="แก้ไข">
                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                              </button>
                              <button onClick={() => setConfirmDeleteTimelineId(item.id)} className="p-2 text-neutral-600 hover:text-red-600 bg-neutral-100 hover:bg-red-50 rounded-full transition-colors" title="ลบ">
@@ -1839,7 +1954,7 @@ export default function PasayaCurtainCenterPreview() {
               {currentUser?.role === 'admin' && (
                 <div className="mt-24 flex justify-center">
                   <button 
-                    onClick={() => setTimelineModal({ isOpen: true, mode: 'add', form: { id: '', year: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' })}
+                    onClick={() => setTimelineModal({ isOpen: true, type: 'timeline', mode: 'add', form: { id: '', year: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' })}
                     className="flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white rounded-full hover:bg-neutral-800 transition-colors shadow-lg"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -2039,506 +2154,33 @@ export default function PasayaCurtainCenterPreview() {
 
       </div>
 
-      {/* ================= PORTFOLIO PROJECT MODAL ================= */}
-      {selectedProject && !isFullscreen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-neutral-900/60 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-300">
-          
-          {/* Preload images for fast sliding */}
-          <div className="hidden">
-             {selectedProject.images.map(url => <img key={url} src={url} alt="preload" />)}
-          </div>
-
-          <div className="max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-t-[32px] sm:rounded-[32px] bg-white shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 relative flex flex-col">
-            
-            <div className="sticky top-0 z-20 flex flex-wrap justify-between items-center gap-2 p-4 bg-white/90 backdrop-blur-lg border-b border-neutral-100 shadow-sm">
-              <button onClick={goBack} className="flex items-center gap-2 text-sm font-bold text-neutral-700 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 px-4 py-2 rounded-full transition-colors shrink-0">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                กลับไปหน้าผลงาน
-              </button>
-              
-              {currentUser?.role === 'admin' && (
-                <div className="flex gap-2 items-center">
-                  {isConfirmingDelete ? (
-                    <div className="flex gap-2 items-center bg-red-50 px-3 py-1 rounded-full border border-red-100 animate-in fade-in zoom-in-95">
-                      <span className="text-xs text-red-600 font-bold px-1">ยืนยันการลบถาวร?</span>
-                      <button onClick={confirmDeleteProject} className="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-colors shadow-sm">ใช่, ลบเลย</button>
-                      <button onClick={() => setIsConfirmingDelete(false)} className="bg-white hover:bg-neutral-100 text-neutral-600 px-4 py-1.5 rounded-full text-xs font-bold transition-colors border border-neutral-200">ยกเลิก</button>
-                    </div>
-                  ) : isEditingProject ? (
-                    <button onClick={saveProjectEdit} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-full text-xs font-bold transition-colors shadow-sm">บันทึกข้อมูล</button>
-                  ) : (
-                    <>
-                      <button onClick={() => {setIsEditingProject(true); setEditProjectForm(selectedProject);}} className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 px-4 py-2 rounded-full text-xs font-bold transition-colors">✏️ แก้ไขข้อมูล</button>
-                      <button onClick={() => setIsConfirmingDelete(true)} className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs font-bold transition-colors">🗑 ลบผลงานนี้</button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="grid md:grid-cols-[1.3fr_0.7fr]">
-              <div className="relative h-[50vh] sm:h-[65vh] bg-neutral-100/50 flex items-center justify-center group overflow-hidden border-r border-neutral-100">
-                <div 
-                  className={`absolute inset-4 cursor-zoom-in transition-transform duration-300 ${selectedProject.presetClass || ''}`}
-                  style={bgStyleObj(selectedProject.images[currentImageIndex], selectedProject.imgPos)}
-                  onClick={toggleFullscreen}
-                />
-                
-                {currentUser?.role === 'admin' && (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEditModal('portfolioCards', selectedProject.id, selectedProject);
-                    }}
-                    className="absolute top-4 right-4 bg-white/90 p-2 rounded-full text-neutral-600 hover:text-neutral-900 hover:bg-white shadow-md z-20 transition-colors opacity-0 group-hover:opacity-100"
-                    title="เปลี่ยนรูป/ปรับการซูม"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                  </button>
-                )}
-
-                {selectedProject.images?.length > 1 && (
-                  <>
-                    <button onClick={handlePrevImage} className="absolute left-4 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-lg flex items-center justify-center hover:bg-white text-neutral-800 transition-transform hover:scale-110 opacity-0 group-hover:opacity-100 focus:opacity-100">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                    </button>
-                    <button onClick={handleNextImage} className="absolute right-4 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-lg flex items-center justify-center hover:bg-white text-neutral-800 transition-transform hover:scale-110 opacity-0 group-hover:opacity-100 focus:opacity-100">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                    </button>
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1.5 bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-sm">
-                      {selectedProject.images.map((_, idx) => (
-                        <div key={idx} className={`w-2 h-2 rounded-full transition-all ${idx === currentImageIndex ? 'bg-white w-4' : 'bg-white/50'}`} />
-                      ))}
-                    </div>
-                  </>
-                )}
-                <div className="absolute top-4 left-4 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-md flex items-center gap-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg> คลิกเพื่อขยาย
-                </div>
-              </div>
-
-              <div className="p-6 sm:p-8 flex flex-col justify-between bg-white">
-                {isEditingProject ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3 mb-2">
-                      <div className="col-span-1">
-                        <label className="text-xs font-bold text-neutral-500 mb-1 block">ชื่อโครงการ</label>
-                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.title || ''} onChange={e => setEditProjectForm({...editProjectForm, title: e.target.value})} />
-                      </div>
-                      <div className="col-span-1">
-                        <label className="text-xs font-bold text-neutral-500 mb-1 block">ประเภทสถานที่ (Filter)</label>
-                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.type || ''} onChange={e => setEditProjectForm({...editProjectForm, type: e.target.value})} placeholder="เช่น บ้านพักอาศัย, คอนโด" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="col-span-2 text-xs font-bold text-neutral-400 mt-2 border-b pb-1">ม่านทึบ (Main Curtain)</div>
-                      <div>
-                        <label className="text-[10px] font-bold text-neutral-500 mb-1 block">ชนิดผ้าทึบ</label>
-                        <select value={editProjectForm.fabricType || ''} onChange={e => setEditProjectForm({...editProjectForm, fabricType: e.target.value})} className="w-full p-2 border rounded-lg text-sm bg-white">
-                          {Array.from(new Set([editProjectForm.fabricType, ...fabricTypes.map(f=>f.title), "มู่ลี่", "Wall Fabric"])).filter(Boolean).map(val => (
-                            <option key={val} value={val}>{String(val)}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-neutral-500 mb-1 block">รูปแบบการตัดเย็บ</label>
-                        <select value={editProjectForm.curtainStyle || ''} onChange={e => setEditProjectForm({...editProjectForm, curtainStyle: e.target.value})} className="w-full p-2 border rounded-lg text-sm bg-white">
-                          {Array.from(new Set([editProjectForm.curtainStyle, ...curtainStyles.map(s=>s.title), "มู่ลี่ไม้", "บุผนัง"])).filter(Boolean).map(val => (
-                            <option key={val} value={val}>{String(val)}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-neutral-500 mb-1 block">รหัส/รุ่น</label>
-                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.model || ''} onChange={e => setEditProjectForm({...editProjectForm, model: e.target.value})} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-neutral-500 mb-1 block">สี</label>
-                        <input type="text" className="w-full p-2 border rounded-lg text-sm" value={editProjectForm.color || ''} onChange={e => setEditProjectForm({...editProjectForm, color: e.target.value})} />
-                      </div>
-
-                      <div className="col-span-2 text-xs font-bold text-emerald-500 mt-2 border-b pb-1 border-emerald-100">ม่านโปร่ง (Sheer Curtain)</div>
-                      <div>
-                        <label className="text-[10px] font-bold text-emerald-600 mb-1 block">ผ้าโปร่ง (ถ้ามี)</label>
-                        <select value={editProjectForm.sheerFabric || ''} onChange={e => setEditProjectForm({...editProjectForm, sheerFabric: e.target.value})} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-emerald-50 text-emerald-800">
-                          <option value="">-- ไม่มีผ้าโปร่ง --</option>
-                          {Array.from(new Set([editProjectForm.sheerFabric, ...fabricTypes.map(f=>f.title)])).filter(Boolean).map(val => (
-                            <option key={val} value={val}>{String(val)}</option>
-                          ))}
-                        </select>
-                      </div>
-                      {editProjectForm.sheerFabric && (
-                        <>
-                          <div>
-                            <label className="text-[10px] font-bold text-emerald-600 mb-1 block">รูปแบบผ้าโปร่ง</label>
-                            <select value={editProjectForm.sheerStyle || ''} onChange={e => setEditProjectForm({...editProjectForm, sheerStyle: e.target.value})} className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-emerald-50 text-emerald-800">
-                              {Array.from(new Set([editProjectForm.sheerStyle, ...curtainStyles.map(s=>s.title)])).filter(Boolean).map(val => (
-                                <option key={val} value={val}>{String(val)}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-bold text-emerald-600 mb-1 block">รหัส/รุ่นผ้าโปร่ง</label>
-                            <input type="text" className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-emerald-50 text-emerald-800 placeholder:text-emerald-300/70" value={editProjectForm.sheerModel || ''} onChange={e => setEditProjectForm({...editProjectForm, sheerModel: e.target.value})} placeholder="รุ่นผ้าโปร่ง..." />
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-bold text-emerald-600 mb-1 block">สีผ้าโปร่ง</label>
-                            <input type="text" className="w-full p-2 border border-emerald-200 rounded-lg text-sm bg-emerald-50 text-emerald-800 placeholder:text-emerald-300/70" value={editProjectForm.sheerColor || ''} onChange={e => setEditProjectForm({...editProjectForm, sheerColor: e.target.value})} placeholder="สีผ้าโปร่ง..." />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-neutral-500 mb-1 block mt-2">รายละเอียดเพิ่มเติม</label>
-                      <textarea className="w-full p-2 border rounded-lg text-sm h-24 resize-none" value={editProjectForm.description || ''} onChange={e => setEditProjectForm({...editProjectForm, description: e.target.value})}></textarea>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <h4 className="text-2xl font-bold text-neutral-900 mb-1">{String(selectedProject.title || '')}</h4>
-                    <div className="text-sm font-medium text-neutral-500 mb-4">{String(selectedProject.subtitle || '')}</div>
-                    <p className="text-sm leading-relaxed text-neutral-600 mb-6 pb-6 border-b border-neutral-100">
-                      {String(selectedProject.description || '')}
-                    </p>
-                    
-                    <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-100 mb-4">
-                      <div className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold mb-1">ม่านทึบ (Main Curtain)</div>
-                      <div className="text-sm font-bold text-neutral-800">{String(selectedProject.curtainStyle || '')} ({String(selectedProject.fabricType || '')})</div>
-                      <div className="text-sm text-neutral-600 mt-1">รุ่น: {String(selectedProject.model || '-')} | สี: {String(selectedProject.color || '-')}</div>
-                    </div>
-
-                    {selectedProject.sheerFabric && (
-                      <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 mb-6">
-                        <div className="text-[10px] uppercase tracking-wider text-emerald-600 font-semibold mb-1">ม่านโปร่ง (Sheer Curtain)</div>
-                        <div className="text-sm font-bold text-emerald-800">{String(selectedProject.sheerStyle || 'ม่านจีบ')} ({String(selectedProject.sheerFabric || '')})</div>
-                        <div className="text-sm text-emerald-700 mt-1">รุ่น: {String(selectedProject.sheerModel || '-')} | สี: {String(selectedProject.sheerColor || '-')}</div>
-                      </div>
-                    )}
-
-                    <div className="flex flex-wrap gap-1.5 mb-8">
-                      {getSafeTags(selectedProject).map((tag) => (
-                        <span key={tag} className="rounded-md bg-neutral-200/60 border border-neutral-200 px-2.5 py-1 text-[11px] font-medium text-neutral-600">#{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {!isEditingProject && (
-                  <div className="flex flex-col gap-2 mt-auto">
-                    <button onClick={() => { 
-                      setSelectedProject(null); 
-                      navigateTo("Products");
-                      setProductTab(String(selectedProject.model || '').includes("Wall Fabric") ? "wallFabric" : "fabricTypes");
-                    }} className={`w-full py-3 ${activeButton} text-center`}>
-                      ดูสเปกสินค้าที่ใช้ในงานนี้
-                    </button>
-                    <button onClick={() => { 
-                      setSelectedProject(null); 
-                      navigateTo("AI Assistant"); 
-                      setAiInput(`ช่วยสรุปจุดขายและคิดคำพูดสำหรับนำเสนอลูกค้าที่สนใจงานสไตล์ ${String(selectedProject.title || '')} (ผ้า ${String(selectedProject.model || '')}) ให้หน่อยค่ะ`); 
-                    }} className={`w-full py-3 ${softButton} text-center bg-white border-neutral-200`}>
-                      ให้ AI ช่วยคิด Script พรีเซนต์งานนี้
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= FULLSCREEN ZOOM OVERLAY ================= */}
-      {isFullscreen && selectedProject && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center overflow-hidden animate-in fade-in duration-200">
-          <div className="absolute top-4 left-0 right-0 flex justify-between items-center px-6 z-50">
-            <div className="flex gap-2 bg-white/10 p-1.5 rounded-full backdrop-blur-md">
-              <button onClick={(e) => { e.stopPropagation(); setZoomLevel(prev => Math.max(1, prev - 0.5)); }} className="w-10 h-10 rounded-full bg-transparent hover:bg-white/20 text-white flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" /></svg>
-              </button>
-              <div className="w-16 flex items-center justify-center text-white text-xs font-bold font-mono">{Math.round(zoomLevel * 100)}%</div>
-              <button onClick={(e) => { e.stopPropagation(); setZoomLevel(prev => Math.min(3, prev + 0.5)); }} className="w-10 h-10 rounded-full bg-transparent hover:bg-white/20 text-white flex items-center justify-center">
-                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
-              </button>
-            </div>
-            <button onClick={toggleFullscreen} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-colors">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-
-          <div className="w-full h-full overflow-auto flex items-center justify-center cursor-move p-4 sm:p-12" onClick={toggleFullscreen}>
-            <img 
-              src={selectedProject.images[currentImageIndex]} alt={selectedProject.title}
-              className={`max-w-full max-h-full object-contain transition-transform duration-200 ease-out ${selectedProject.presetClass || ''}`}
-              style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center' }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-
-          {selectedProject.images.length > 1 && zoomLevel === 1 && (
-            <>
-              <button onClick={handlePrevImage} className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-colors">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              </button>
-              <button onClick={handleNextImage} className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-colors">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ================= SINGLE IMAGE FULLSCREEN OVERLAY ================= */}
-      {viewImage && (
-        <div className="fixed inset-0 z-[150] bg-black/95 backdrop-blur-xl flex items-center justify-center overflow-hidden animate-in fade-in duration-200">
-          <div className="absolute top-4 left-0 right-0 flex justify-between items-center px-6 z-50 pointer-events-none">
-            <div className="flex gap-2 bg-white/10 p-1.5 rounded-full backdrop-blur-md pointer-events-auto">
-              <button onClick={(e) => { e.stopPropagation(); setZoomLevel(prev => Math.max(1, prev - 0.5)); }} className="w-10 h-10 rounded-full bg-transparent hover:bg-white/20 text-white flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" /></svg>
-              </button>
-              <div className="w-16 flex items-center justify-center text-white text-xs font-bold font-mono">{Math.round(zoomLevel * 100)}%</div>
-              <button onClick={(e) => { e.stopPropagation(); setZoomLevel(prev => Math.min(3, prev + 0.5)); }} className="w-10 h-10 rounded-full bg-transparent hover:bg-white/20 text-white flex items-center justify-center">
-                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
-              </button>
-            </div>
-            <button onClick={() => setViewImage(null)} className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-colors pointer-events-auto">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-
-          <div className="w-full h-full overflow-auto flex items-center justify-center cursor-move p-4 sm:p-12" onClick={() => setViewImage(null)}>
-            <img 
-              src={viewImage} 
-              alt="Fullscreen Preview"
-              className="max-w-full max-h-full object-contain transition-transform duration-200 ease-out"
-              style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center' }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ================= EDIT IMAGE / CROP MODAL (Global) ================= */}
-      {editImageModal.isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 relative max-h-[90vh] overflow-y-auto">
-            
-            {editImageModal.isSaving && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 rounded-3xl flex flex-col items-center justify-center">
-                 <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-2"></div>
-                 <span className="text-sm font-bold text-neutral-700">กำลังบันทึกข้อมูล...</span>
-              </div>
-            )}
-
-            <h3 className="text-xl font-bold mb-2 text-neutral-800">ปรับแต่งรูปภาพและการแสดงผล</h3>
-            <p className="text-sm text-neutral-500 mb-5">เปลี่ยนรูปภาพ จัดสัดส่วน เลื่อน และเลือกสีตัวหนังสือ</p>
-            
-            <div className="mb-6 space-y-5">
-              
-              {/* Card Aspect Toggle (เฉพาะหน้าพอร์ต) */}
-              {editImageModal.type === 'portfolioCards' && (
-                <div className="flex gap-2">
-                  <button onClick={() => setEditImageModal(prev => ({...prev, cardAspect: 'landscape', previewAspect: '4:3'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.cardAspect === 'landscape' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>แนวนอน (4:3)</button>
-                  <button onClick={() => setEditImageModal(prev => ({...prev, cardAspect: 'portrait', previewAspect: '3:4'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.cardAspect === 'portrait' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>แนวตั้ง (3:4)</button>
-                </div>
-              )}
-
-              {/* Preview Toggle for Products (Small Card vs Big Panel) */}
-              {['fabricTypes', 'curtainStyles', 'wallFabrics'].includes(editImageModal.type) && (
-                <div className="flex gap-2">
-                  <button onClick={() => setEditImageModal(prev => ({...prev, previewAspect: '4:3'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.previewAspect === '4:3' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>พรีวิวหน้าการ์ด (4:3)</button>
-                  <button onClick={() => setEditImageModal(prev => ({...prev, previewAspect: '16:9'}))} className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${editImageModal.previewAspect === '16:9' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-neutral-200 text-neutral-500'}`}>พรีวิวแถบขวา (16:9)</button>
-                </div>
-              )}
-
-              {/* Preview Box with Mouse Drag Editing (No Sliders) */}
-              <div className="bg-emerald-50 text-emerald-700 text-xs font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-2 border border-emerald-100">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
-                <span>ลากเมาส์เพื่อเลื่อนภาพ | หมุน Scroll เมาส์เพื่อซูม</span>
-              </div>
-
-              <div 
-                ref={previewRef}
-                onMouseDown={handleEditMouseDown}
-                onMouseMove={handleEditMouseMove}
-                onMouseUp={handleEditMouseUp}
-                onMouseLeave={handleEditMouseUp}
-                onTouchStart={handleEditTouchStart}
-                onTouchMove={handleEditTouchMove}
-                onTouchEnd={handleEditMouseUp}
-                className={`w-full rounded-2xl bg-neutral-200 border border-neutral-300 overflow-hidden relative shadow-inner mx-auto transition-all cursor-move select-none touch-none`}
-                style={getPreviewStyle()}
-              >
-                 <div className="w-full h-full pointer-events-none" style={innerBgStyle(editImageModal.url, editImageModal.pos)} />
-                 
-                 {/* Live Text Color Preview for specific types */}
-                 {['fabricTypes', 'curtainStyles', 'wallFabrics'].includes(editImageModal.type) && (
-                   <>
-                    <div className="absolute inset-0 bg-black/20 pointer-events-none" />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className="font-bold text-lg drop-shadow-md" style={{ color: editImageModal.textColor }}>{editImageModal.textTitle || 'ข้อความตัวอย่าง'}</span>
-                    </div>
-                   </>
-                 )}
-              </div>
-
-              {/* Text Color Selector */}
-              {['fabricTypes', 'curtainStyles', 'wallFabrics'].includes(editImageModal.type) && (
-                <div className="flex items-center gap-4">
-                  <label className="text-xs font-bold text-neutral-600">สีตัวหนังสือทับรูป:</label>
-                  <div className="flex gap-2">
-                    <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#FFFFFF'}))} className={`w-6 h-6 rounded-full border-2 bg-white ${editImageModal.textColor === '#FFFFFF' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
-                    <button onClick={() => setEditImageModal(prev => ({...prev, textColor: '#000000'}))} className={`w-6 h-6 rounded-full border-2 bg-black ${editImageModal.textColor === '#000000' ? 'border-emerald-500' : 'border-neutral-200'}`}></button>
-                    <input type="color" value={editImageModal.textColor} onChange={e => setEditImageModal(prev => ({...prev, textColor: e.target.value}))} className="w-6 h-6 rounded border-0 p-0 cursor-pointer" />
-                  </div>
-                </div>
-              )}
-
-              <div className="h-px bg-neutral-200 w-full" />
-
-              <div>
-                <label className="text-xs font-bold text-neutral-600 mb-1 block">เปลี่ยนรูป (ไฟล์จากเครื่อง)</label>
-                <input type="file" accept="image/*, .heic, .heif" ref={fileInputRef} onChange={handleEditModalFileUpload} className="w-full border border-neutral-300 rounded-xl px-3 py-2 text-sm" />
-              </div>
-              <div className="relative flex items-center py-1">
-                 <div className="flex-grow border-t border-neutral-200"></div><span className="flex-shrink-0 mx-4 text-neutral-400 text-[10px]">หรือลิงก์ URL</span><div className="flex-grow border-t border-neutral-200"></div>
-              </div>
-              <div>
-                <input type="text" value={editImageModal.url} onChange={(e) => setEditImageModal(prev => ({...prev, url: e.target.value, fileObj: null}))} className="w-full border border-neutral-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-neutral-500" placeholder="https://example.com/image.jpg" />
-              </div>
-            </div>
-
-            <div className="flex gap-2 justify-end pt-2">
-              <button onClick={handleResetToDefault} className="px-4 py-2.5 rounded-full text-neutral-500 text-xs font-bold hover:bg-neutral-100 transition-colors mr-auto">↺ คืนค่าเริ่มต้น</button>
-              <button onClick={() => {setEditImageModal({ isOpen: false, type: '', id: '', url: '', fileObj: null, isSaving: false, pos:{x:50,y:50,zoom:1}, textColor:'#FFF', cardAspect:'landscape', previewAspect: '4:3', targetItem: null, textTitle: '', textSubtitle: '' }); if(fileInputRef.current) fileInputRef.current.value = "";}} className="px-5 py-2.5 rounded-full border border-neutral-300 text-neutral-600 text-sm font-medium hover:bg-neutral-50 transition-colors">ยกเลิก</button>
-              <button onClick={handleSaveImage} className="px-5 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors shadow-md">บันทึก</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= FILTER MANAGEMENT MODAL (Admin Only) ================= */}
-      {isFilterModalOpen && currentUser?.role === 'admin' && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 relative max-h-[80vh] flex flex-col">
-            <h3 className="text-xl font-bold mb-2 text-neutral-800">จัดการ Filter ผลงาน</h3>
-            <p className="text-sm text-neutral-500 mb-5">เพิ่ม ลบ หรือแก้ไขตัวกรองในหน้าพอร์ตฟอลิโอ</p>
-
-            <div className="flex gap-2 mb-4 shrink-0">
-              <input 
-                type="text" value={newFilterKeyword} onChange={e => setNewFilterKeyword(e.target.value)} 
-                className="flex-1 border border-neutral-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-emerald-500" 
-                placeholder="พิมพ์ชื่อ Filter ใหม่..." 
-              />
-              <button 
-                onClick={() => {
-                  if (newFilterKeyword.trim() && !portfolioFilters.includes(newFilterKeyword.trim())) {
-                    const newList = [...portfolioFilters, newFilterKeyword.trim()];
-                    if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
-                    setNewFilterKeyword("");
-                  }
-                }}
-                className="px-4 py-2 bg-neutral-900 text-white rounded-xl text-sm font-bold shadow-md hover:bg-neutral-800 transition-colors"
-              >
-                เพิ่ม
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-2 pr-2 pb-4">
-              {portfolioFilters.map((f, index) => (
-                <div key={`${f}-${index}`} className="flex justify-between items-center bg-neutral-50 border border-neutral-200 p-3 rounded-xl">
-                  {editingFilterIndex === index ? (
-                    <input
-                      type="text"
-                      className="flex-1 border border-neutral-300 rounded px-2 py-1 text-sm outline-none focus:border-emerald-500 mr-2"
-                      value={editFilterValue}
-                      onChange={(e) => setEditFilterValue(e.target.value)}
-                    />
-                  ) : (
-                    <span className="text-sm font-semibold text-neutral-700">{String(f)}</span>
-                  )}
-                  
-                  <div className="flex gap-1 shrink-0">
-                    {editingFilterIndex === index ? (
-                      <>
-                        <button onClick={() => {
-                          const val = editFilterValue.trim();
-                          if(val) {
-                            const newList = [...portfolioFilters];
-                            newList[index] = val;
-                            if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
-                          }
-                          setEditingFilterIndex(null);
-                        }} className="text-xs bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg font-bold transition-colors">บันทึก</button>
-                        <button onClick={() => setEditingFilterIndex(null)} className="text-xs bg-neutral-200 hover:bg-neutral-300 text-neutral-700 px-3 py-1.5 rounded-lg font-bold transition-colors">ยกเลิก</button>
-                      </>
-                    ) : (
-                      f !== 'ทั้งหมด' && (
-                        <>
-                          <button onClick={() => {
-                            if (index > 1) { 
-                              const newList = [...portfolioFilters];
-                              const temp = newList[index];
-                              newList[index] = newList[index - 1];
-                              newList[index - 1] = temp;
-                              if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
-                            }
-                          }} className={`text-xs bg-neutral-200 hover:bg-neutral-300 px-2 py-1.5 rounded-lg transition-colors ${index <= 1 ? 'opacity-30 cursor-not-allowed' : ''}`} title="เลื่อนขึ้น">⬆️</button>
-                          
-                          <button onClick={() => {
-                            if (index < portfolioFilters.length - 1) {
-                              const newList = [...portfolioFilters];
-                              const temp = newList[index];
-                              newList[index] = newList[index + 1];
-                              newList[index + 1] = temp;
-                              if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
-                            }
-                          }} className={`text-xs bg-neutral-200 hover:bg-neutral-300 px-2 py-1.5 rounded-lg transition-colors ${index >= portfolioFilters.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`} title="เลื่อนลง">⬇️</button>
-                          
-                          <button onClick={() => { setEditingFilterIndex(index); setEditFilterValue(String(f)); }} className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold px-3 py-1.5 rounded-lg transition-colors ml-1">แก้ไข</button>
-                          <button onClick={() => {
-                            const newList = portfolioFilters.filter((_, i) => i !== index);
-                            if (db) setDoc(doc(db, "settings", "portfolioFilters"), { list: newList });
-                          }} className="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-lg transition-colors">ลบ</button>
-                        </>
-                      )
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-neutral-100 shrink-0">
-              <button onClick={() => {setIsFilterModalOpen(false); setEditingFilterIndex(null);}} className="px-6 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors shadow-md">เสร็จสิ้น</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= TIMELINE EDIT MODAL (Admin Only) ================= */}
+      {/* ================= TIMELINE / STANDARD EDIT MODAL (Global) ================= */}
       {timelineModal.isOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-neutral-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-6 w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto relative">
             <h3 className="text-xl font-bold mb-2 text-neutral-800">
-              {timelineModal.mode === 'add' ? 'เพิ่มไทม์ไลน์ใหม่' : 'แก้ไขข้อมูลไทม์ไลน์'}
+              {timelineModal.mode === 'add' ? 'เพิ่มข้อมูลใหม่' : 'แก้ไขข้อมูล'}
             </h3>
-            <p className="text-sm text-neutral-500 mb-5">จัดการข้อมูลประวัติแบรนด์และอัปโหลดรูปภาพได้หลายรูป</p>
+            <p className="text-sm text-neutral-500 mb-5">จัดการข้อมูลและอัปโหลดรูปภาพได้หลายรูป</p>
             
             <div className="space-y-4 mb-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-neutral-600 mb-1 block">ปี (Year)</label>
-                  <input 
-                    type="text" value={timelineModal.form.year} 
-                    onChange={e => setTimelineModal(prev => ({...prev, form: {...prev.form, year: e.target.value}}))}
-                    className="w-full border border-neutral-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-neutral-500" placeholder="เช่น 2024 หรือ Today"
-                  />
-                </div>
+              <div className={`grid gap-4 ${timelineModal.type === 'timeline' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {timelineModal.type === 'timeline' && (
+                  <div>
+                    <label className="text-xs font-bold text-neutral-600 mb-1 block">ปี (Year)</label>
+                    <input 
+                      type="text" value={timelineModal.form.year || ''} 
+                      onChange={e => setTimelineModal(prev => ({...prev, form: {...prev.form, year: e.target.value}}))}
+                      className="w-full border border-neutral-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-neutral-500" placeholder="เช่น 2024 หรือ Today"
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="text-xs font-bold text-neutral-600 mb-1 block">หัวข้อ (Title)</label>
                   <input 
-                    type="text" value={timelineModal.form.title} 
+                    type="text" value={timelineModal.form.title || ''} 
                     onChange={e => setTimelineModal(prev => ({...prev, form: {...prev.form, title: e.target.value}}))}
-                    className="w-full border border-neutral-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-neutral-500" placeholder="เช่น Smart Living"
+                    className="w-full border border-neutral-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-neutral-500" placeholder="ใส่ชื่อหัวข้อ..."
                   />
                 </div>
               </div>
@@ -2559,7 +2201,7 @@ export default function PasayaCurtainCenterPreview() {
                   </div>
                 </div>
                 <textarea 
-                  value={timelineModal.form.text} 
+                  value={timelineModal.form.text || ''} 
                   onChange={e => setTimelineModal(prev => ({...prev, form: {...prev.form, text: e.target.value}}))}
                   className="w-full border border-neutral-300 rounded-xl px-3 py-2 text-sm h-24 resize-none outline-none focus:border-neutral-500"
                   placeholder="เขียนรายละเอียดเรื่องราว..."
@@ -2607,10 +2249,10 @@ export default function PasayaCurtainCenterPreview() {
             </div>
 
             <div className="flex gap-3 justify-end pt-4 border-t border-neutral-100">
-              <button onClick={() => {setTimelineModal({ isOpen: false, mode: 'add', form: { id: '', year: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' }); if(timelineFileRef.current) timelineFileRef.current.value = "";}} className="px-5 py-2.5 rounded-full border border-neutral-300 text-neutral-600 text-sm font-medium hover:bg-neutral-50 transition-colors">ยกเลิก</button>
+              <button onClick={() => {setTimelineModal({ isOpen: false, type: 'timeline', mode: 'add', form: { id: '', year: '', title: '', text: '', images: [], textAlign: 'left' }, rawFiles: [], newUrlInput: '' }); if(timelineFileRef.current) timelineFileRef.current.value = "";}} className="px-5 py-2.5 rounded-full border border-neutral-300 text-neutral-600 text-sm font-medium hover:bg-neutral-50 transition-colors">ยกเลิก</button>
               <button 
                 onClick={handleSaveTimeline} 
-                disabled={!timelineModal.form.year || !timelineModal.form.title}
+                disabled={(!timelineModal.form.year && timelineModal.type === 'timeline') || !timelineModal.form.title}
                 className="px-5 py-2.5 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors shadow-md disabled:bg-neutral-300 disabled:cursor-not-allowed"
               >
                 บันทึกข้อมูล
